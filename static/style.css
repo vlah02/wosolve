@@ -439,3 +439,7 @@ body.dark-mode {
     background-color: #4a5568;
     color: #ffffff;
 }
+
+.dark-mode .dark\:text-white {
+  color: #fff;
+}

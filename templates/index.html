@@ -11,14 +11,14 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col items-center">
 
-  <!-- Theme toggle -->
+  
   <div class="theme-toggle absolute top-4 right-4 z-50">
     <button id="theme-toggle" class="text-gray-500 dark:text-gray-300 focus:outline-none">
       <i id="theme-icon" class="fas fa-moon"></i>
     </button>
   </div>
 
-  <!-- Logo -->
+  
   <div class="w-full flex justify-center mt-4">
     <img id="logo"
          src="{{ url_for('static', filename='images/wosolve.png') }}"
@@ -26,12 +26,12 @@
          class="w-64 md:w-72 lg:w-80">
   </div>
 
-  <!-- Main panel -->
+  
   <div class="flex-grow flex items-center justify-center mt-4 mb-14 px-4">
     <div class="w-full max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-visible">
       <div class="p-6">
 
-        <!-- Guess input -->
+        
         <form id="guessForm" method="post" class="flex flex-col items-center">
           <div class="flex items-center mb-1">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-3 select-none">
@@ -62,7 +62,7 @@
           </div>
         </form>
 
-        <!-- On‑screen keyboard -->
+        
         <div id="keyboard" class="space-y-2">
           <div class="flex justify-center gap-2">
             {% for k in "QWERTYUIOP" %}
@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <!-- Color chooser & error popup -->
+        
         <div id="colorPopup" class="color-popup">
           <button onclick="addColorToInput('+')" class="color-button bg-green-500"><i class="fas fa-check"></i></button>
           <button onclick="addColorToInput('*')" class="color-button bg-yellow-500"><i class="fas fa-question"></i></button>
@@ -110,7 +110,7 @@
         </div>
         <div id="errorPopup" class="error-popup">ERROR: Incorrect format!</div>
 
-        <!-- Word suggestions -->
+        
         {% if words %}
           <div class="mt-4 results-container">
             {% for word in words %}
@@ -123,60 +123,45 @@
     </div>
   </div>
 
-  <!-- Footer / "How to play?" -->
+  
   <div class="footer-text no-select">
     <span id="howToPlay" class="cursor-pointer">How to play?</span>
   </div>
 
-  <!-- Easter egg GIF -->
+  
   <img id="movingGif"
        class="moving-gif"
        src="{{ url_for('static', filename='images/dog.gif') }}"
        alt="Moving GIF">
 
-<div
-  id="history"
-  class="
-    fixed right-8 top-1/2 transform -translate-y-1/2
-    flex-shrink-0
-    w-64           <!-- 16rem wide: 5×2.5rem tiles + gaps + padding -->
-    h-92           <!-- 24rem tall: fits 7×2.5rem rows + spacing + padding -->
-    p-4 bg-gray-800 dark:bg-gray-800
-    rounded-xl
-    shadow-lg
-    overflow-y-auto
-    space-y-2
-    z-50
-  "
->
-  <h3 class="text-sm font-semibold text-gray-200 dark:text-gray-200 text-center mb-2">
-    History
-  </h3>
+  <div
+    id="history"
+    class="fixed right-8 top-1/2 transform -translate-y-1/2 flex-shrink-0 w-64 h-96 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-y-auto space-y-2 z-50">
+    <h3 class="text-3xl font-semibold text-black dark:text-white text-center mt-2 mb-4">
+      History
+    </h3>
 
-  {% for guess in history %}
-    <div class="flex justify-start space-x-2">
-      {% for i in range(0,10,2) %}
-        {% set L = guess[i].upper() %}
-        {% set sym = guess[i+1] %}
-        {% if sym == '+' %}
-          {% set color = 'bg-green-500 text-white' %}
-        {% elif sym == '*' %}
-          {% set color = 'bg-yellow-500 text-white' %}
-        {% else %}
-          {% set color = 'bg-gray-300 text-gray-700' %}
-        {% endif %}
-        <div
-          class="{{ color }}
-                 w-10 h-10
-                 flex items-center justify-center
-                 rounded-md
-                 text-lg font-bold">
-          {{ L }}
+    {% for guess in history %}
+        <div class="flex justify-start space-x-2">
+          {% for i in range(0,10,2) %}
+            {% set L   = guess[i].upper() %}
+            {% set sym = guess[i+1] %}
+            {% if sym == '+' %}
+              {% set color = 'bg-green-500 text-white' %}
+            {% elif sym == '*' %}
+              {% set color = 'bg-yellow-500 text-white' %}
+            {% else %}
+              {% set color = 'bg-red-500 text-white' %}
+            {% endif %}
+            <div class="{{ color }}
+                        w-10 h-10 flex items-center justify-center
+                        rounded-md text-lg font-bold">
+              {{ L }}
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
-    </div>
-  {% endfor %}
-</div>
+  </div>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
