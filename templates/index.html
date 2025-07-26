@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device=width, initial-scale=1.0">
+    <title>WoSoLve</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body class="bg-gray-100 h-screen flex justify-center items-center">
+    <div class="theme-toggle">
+        <button id="theme-toggle" class="text-gray-500 focus:outline-none">
+            <i id="theme-icon" class="fas fa-moon"></i>
+        </button>
+    </div>
+    <div class="container mx-auto px-4 container-overflow-visible">
+        <div class="w-full max-w-xl mx-auto bg-white rounded-xl shadow-md overflow-visible">
+            <div class="p-6">
+                <div class="flex justify-center mb-4">
+                    <h1 id="logo" class="text-3xl font-bold text-gray-800 cursor-pointer no-select">WoSoLve</h1>
+                </div>
+
+                <form id="guessForm" method="post" class="flex flex-col items-center">
+                    <div class="flex items-center mb-1">
+                        <label style="user-select: none;" class="text-sm font-medium text-gray-700 mr-3">Enter your guess:</label>
+                        <div id="guessContainer" class="flex">
+                            <div class="placeholder-box"></div>
+                            <div class="placeholder-box"></div>
+                            <div class="placeholder-box"></div>
+                            <div class="placeholder-box"></div>
+                            <div class="placeholder-box"></div>
+                        </div>
+                        <input type="hidden" name="guess" id="hiddenGuess">
+                    </div>
+                    <div class="flex items-center">
+                        <div class="custom-checkbox-container">
+                            <div class="custom-checkbox" id="customCheckbox"></div>
+                            <input type="checkbox" id="includeExtended" name="includeExtended" class="hidden" {% if include_extended %}checked{% endif %}>
+                            <label for="includeExtended" class="text-sm font-medium text-gray-700 custom-checkbox-label">Include extended word list</label>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="keyboard" class="mt-3 space-y-2 keyboard-container">
+                    <div class="flex justify-center gap-2">
+                        <button class="key" data-key="q">Q</button>
+                        <button class="key" data-key="w">W</button>
+                        <button class="key" data-key="e">E</button>
+                        <button class="key" data-key="r">R</button>
+                        <button class="key" data-key="t">T</button>
+                        <button class="key" data-key="y">Y</button>
+                        <button class="key" data-key="u">U</button>
+                        <button class="key" data-key="i">I</button>
+                        <button class="key" data-key="o">O</button>
+                        <button class="key" data-key="p">P</button>
+                    </div>
+                    <div class="flex justify-center gap-2">
+                        <button class="key" data-key="a">A</button>
+                        <button class="key" data-key="s">S</button>
+                        <button class="key" data-key="d">D</button>
+                        <button class="key" data-key="f">F</button>
+                        <button class="key" data-key="g">G</button>
+                        <button class="key" data-key="h">H</button>
+                        <button class="key" data-key="j">J</button>
+                        <button class="key" data-key="k">K</button>
+                        <button class="key" data-key="l">L</button>
+                    </div>
+                    <div class="flex justify-center gap-2">
+                        <div class="submit-button-container">
+                            <button type="submit" form="guessForm" class="bg-indigo-600 text-white button hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            {% if random_word %}
+                                <div class="random-word-tooltip">
+                                    Random word to try: {{ random_word }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <button class="key" data-key="z">Z</button>
+                        <button class="key" data-key="x">X</button>
+                        <button class="key" data-key="c">C</button>
+                        <button class="key" data-key="v">V</button>
+                        <button class="key" data-key="b">B</button>
+                        <button class="key" data-key="n">N</button>
+                        <button class="key" data-key="m">M</button>
+                        <div class="flex submit-button-container">
+                            <button class="key" id="backspace-key">⌫</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-2 mt-12" style="margin-top: 1rem;">
+                        <button type="button" onclick="window.location.href='/reset'" class="bg-red-600 text-white button hover:bg-red-700 focus:outline-none focus:bg-red-700">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="colorPopup" class="color-popup">
+                    <button onclick="addColorToInput('+')" class="color-button bg-green-500"><i class="fas fa-check"></i></button>
+                    <button onclick="addColorToInput('*')" class="color-button bg-yellow-500"><i class="fas fa-question"></i></button>
+                    <button onclick="addColorToInput('-')" class="color-button bg-red-500"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div id="errorPopup" class="error-popup">ERROR: Incorrect format!</div>
+
+                {% if words %}
+                    <div class="mt-2 results-container">
+                        {% for word in words %}
+                            <li>{{ word }}</li>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-text no-select">
+        <span id="howToPlay" class="cursor-pointer">How to play?</span>
+    </div>
+
+    <div id="howToPlayModal" class="modal">
+        <div class="modal-content no-select">
+            <button class="close-button" onclick="closeModal()">&times;</button>
+            <h2 class="text-2xl font-bold mb-2">How to play?</h2>
+            <p>
+                Use your keyboard (or select a letter on screen) to make guesses:<br>
+                After typing a letter, press 1 for correct position, 2 for wrong position, and 3 for incorrect letter<br>
+                Press ESC to reset the page<br>
+                Press ENTER to submit your answer<br>
+                Press BACKSPACE to remove a letter from your guess
+            </p>
+        </div>
+    </div>
+
+    <img src="../static/images/dog.gif" alt="Moving GIF" class="moving-gif" id="movingGif">
+
+    <script src="../static/script.js"></script>
+</body>
+</html>
