@@ -9,19 +9,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="../static/style.css">
 </head>
-<body class="bg-gray-100 h-screen flex justify-center items-center">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
     <div class="theme-toggle">
         <button id="theme-toggle" class="text-gray-500 focus:outline-none">
             <i id="theme-icon" class="fas fa-moon"></i>
         </button>
     </div>
-    <div class="container mx-auto px-4 container-overflow-visible">
-        <div class="w-full max-w-xl mx-auto bg-white rounded-xl shadow-md overflow-visible">
-            <div class="p-6">
-                <div class="flex justify-center mb-4">
-                    <h1 id="logo" class="text-3xl font-bold text-gray-800 cursor-pointer no-select">WoSoLve</h1>
-                </div>
 
+    <div class="w-full flex justify-center mt-4">
+        <img src="{{ url_for('static', filename='images/wosolve.png') }}" alt="Logo" class="w-64 md:w-72 lg:w-80">
+    </div>
+
+  <div class="flex-grow flex items-center justify-center mb-14">
+      <div class="w-full max-w-xl mx-auto bg-white rounded-xl shadow-md overflow-visible">
+            <div class="p-6">
                 <form id="guessForm" method="post" class="flex flex-col items-center">
                     <div class="flex items-center mb-1">
                         <label style="user-select: none;" class="text-sm font-medium text-gray-700 mr-3">Enter your guess:</label>
