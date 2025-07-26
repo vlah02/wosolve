@@ -1,144 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WoSoLve</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon.png') }}">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WoSoLve</title>
+  <link rel="icon" href="{{ url_for('static', filename='images/icon.png') }}" type="image/png">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center">
-    <div class="theme-toggle absolute top-2 right-2">
-        <button id="theme-toggle" class="text-gray-500 focus:outline-none">
-            <i id="theme-icon" class="fas fa-moon"></i>
-        </button>
-    </div>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col items-center">
 
-    <div class="w-full flex justify-center mt-4">
-        <img id="logo" src="{{ url_for('static', filename='images/wosolve.png') }}" alt="Logo" class="w-64 md:w-72 lg:w-80">
-    </div>
+  <!-- Theme toggle -->
+  <div class="theme-toggle absolute top-4 right-4 z-50">
+    <button id="theme-toggle" class="text-gray-500 dark:text-gray-300 focus:outline-none">
+      <i id="theme-icon" class="fas fa-moon"></i>
+    </button>
+  </div>
 
-    <div class="flex-grow flex items-center justify-center mt-4 mb-14">
-        <div class="w-full max-w-xl mx-auto bg-white rounded-xl shadow-md overflow-visible">
-            <div class="p-6">
-                <form id="guessForm" method="post" class="flex flex-col items-center">
-                    <div class="flex items-center mb-1">
-                        <label class="text-sm font-medium text-gray-700 mr-3 select-none">Enter your guess:</label>
-                        <div id="guessContainer" class="flex">
-                            <div class="placeholder-box"></div>
-                            <div class="placeholder-box"></div>
-                            <div class="placeholder-box"></div>
-                            <div class="placeholder-box"></div>
-                            <div class="placeholder-box"></div>
-                        </div>
-                        <input type="hidden" name="guess" id="hiddenGuess">
-                    </div>
-                    <div class="flex items-center">
-                        <div class="custom-checkbox-container">
-                            <div class="custom-checkbox" id="customCheckbox"></div>
-                            <input type="checkbox" id="includeExtended" name="includeExtended" class="hidden" {% if include_extended %}checked{% endif %}>
-                            <label for="includeExtended" class="text-sm font-medium text-gray-700 custom-checkbox-label">Include extended word list</label>
-                        </div>
-                    </div>
-                </form>
+  <!-- Logo -->
+  <div class="w-full flex justify-center mt-4">
+    <img id="logo"
+         src="{{ url_for('static', filename='images/wosolve.png') }}"
+         alt="Logo"
+         class="w-64 md:w-72 lg:w-80">
+  </div>
 
-                <div id="keyboard" class="mt-3 space-y-2 keyboard-container">
-                    <div class="flex justify-center gap-2">
-                        {% for k in "QWERTYUIOP" %}
-                            <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
-                        {% endfor %}
-                    </div>
-                    <div class="flex justify-center gap-2">
-                        {% for k in "ASDFGHJKL" %}
-                            <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
-                        {% endfor %}
-                    </div>
-                    <div class="flex justify-center gap-2">
-                        <div class="submit-button-container">
-                            <button type="submit" form="guessForm" class="bg-indigo-600 text-white button hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            {% if random_word %}
-                                <div class="random-word-tooltip">
-                                    Random word to try: {{ random_word }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        {% for k in "ZXCVBNM" %}
-                            <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
-                        {% endfor %}
-                        <div class="submit-button-container">
-                            <button class="key" id="backspace-key">⌫</button>
-                        </div>
-                    </div>
-                    <div class="flex justify-center gap-2 mt-12">
-                        <button type="button" onclick="window.location.href='/reset'" class="bg-red-600 text-white button hover:bg-red-700 focus:outline-none focus:bg-red-700">
-                            <i class="fas fa-redo"></i>
-                        </button>
-                    </div>
-                </div>
+  <!-- Main panel -->
+  <div class="flex-grow flex items-center justify-center mt-4 mb-14 px-4">
+    <div class="w-full max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-visible">
+      <div class="p-6">
 
-                <div id="colorPopup" class="color-popup">
-                    <button onclick="addColorToInput('+')" class="color-button bg-green-500"><i class="fas fa-check"></i></button>
-                    <button onclick="addColorToInput('*')" class="color-button bg-yellow-500"><i class="fas fa-question"></i></button>
-                    <button onclick="addColorToInput('-')" class="color-button bg-red-500"><i class="fas fa-times"></i></button>
-                </div>
-
-                <div id="errorPopup" class="error-popup">ERROR: Incorrect format!</div>
-
-                {% if words %}
-                    <div class="mt-2 results-container">
-                        {% for word in words %}
-                            <li>{{ word }}</li>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+        <!-- Guess input -->
+        <form id="guessForm" method="post" class="flex flex-col items-center">
+          <div class="flex items-center mb-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-3 select-none">
+              Enter your guess:
+            </label>
+            <div id="guessContainer" class="flex">
+              <div class="placeholder-box"></div>
+              <div class="placeholder-box"></div>
+              <div class="placeholder-box"></div>
+              <div class="placeholder-box"></div>
+              <div class="placeholder-box"></div>
             </div>
-        </div>
-    </div>
+            <input type="hidden" name="guess" id="hiddenGuess">
+          </div>
+          <div class="flex items-center mb-4">
+            <div class="custom-checkbox-container flex items-center">
+              <div class="custom-checkbox" id="customCheckbox"></div>
+              <input type="checkbox"
+                     name="includeExtended"
+                     id="includeExtended"
+                     class="hidden"
+                     {% if include_extended %}checked{% endif %}>
+              <label for="includeExtended"
+                     class="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2 select-none">
+                Include extended word list
+              </label>
+            </div>
+          </div>
+        </form>
 
-    <div class="footer-text no-select">
-        <span id="howToPlay" class="cursor-pointer">How to play?</span>
-    </div>
-
-    <div id="howToPlayModal" class="modal">
-        <div class="modal-content no-select">
-            <button class="close-button" onclick="closeModal()">&times;</button>
-            <h2 class="text-2xl font-bold mb-2">How to play?</h2>
-            <p>
-                Use your keyboard (or select a letter on screen) to make guesses:<br>
-                After typing a letter, press 1 for correct position, 2 for wrong position, and 3 for incorrect letter<br>
-                Press ESC to reset the page<br>
-                Press ENTER to submit your answer<br>
-                Press BACKSPACE to remove a letter from your guess
-            </p>
-        </div>
-    </div>
-
-    <img src="{{ url_for('static', filename='images/dog.gif') }}" alt="Moving GIF" class="moving-gif" id="movingGif">
-
-    <div class="history-container">
-        <h3 class="text-gray-700 mb-2">History</h3>
-        {% for guess in history %}
-          <div class="history-row">
-            {% for i in range(0, 10, 2) %}
-              {% set L = guess[i].upper() %}
-              {% set sym = guess[i+1] %}
-              {% if sym == '+' %}
-                {% set bg = 'bg-green-500' %}
-              {% elif sym == '*' %}
-                {% set bg = 'bg-yellow-500' %}
-              {% else %}
-                {% set bg = 'bg-gray-300' %}
-              {% endif %}
-              <div class="history-box {{ bg }}">{{ L }}</div>
+        <!-- On‑screen keyboard -->
+        <div id="keyboard" class="space-y-2">
+          <div class="flex justify-center gap-2">
+            {% for k in "QWERTYUIOP" %}
+              <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
             {% endfor %}
           </div>
-        {% endfor %}
-      </div>
+          <div class="flex justify-center gap-2">
+            {% for k in "ASDFGHJKL" %}
+              <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
+            {% endfor %}
+          </div>
+          <div class="flex justify-center gap-2">
+            <div class="submit-button-container">
+              <button type="submit" form="guessForm"
+                      class="bg-indigo-600 text-white button hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
+                <i class="fas fa-check"></i>
+              </button>
+              {% if random_word %}
+                <div class="random-word-tooltip">
+                  Random word to try: {{ random_word }}
+                </div>
+              {% endif %}
+            </div>
+            {% for k in "ZXCVBNM" %}
+              <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
+            {% endfor %}
+            <div class="submit-button-container">
+              <button class="key" id="backspace-key">⌫</button>
+            </div>
+          </div>
+          <div class="flex justify-center mt-4">
+            <button type="button"
+                    onclick="window.location.href='/reset'"
+                    class="bg-red-600 text-white button hover:bg-red-700 focus:outline-none focus:bg-red-700">
+              <i class="fas fa-redo"></i>
+            </button>
+          </div>
+        </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <!-- Color chooser & error popup -->
+        <div id="colorPopup" class="color-popup">
+          <button onclick="addColorToInput('+')" class="color-button bg-green-500"><i class="fas fa-check"></i></button>
+          <button onclick="addColorToInput('*')" class="color-button bg-yellow-500"><i class="fas fa-question"></i></button>
+          <button onclick="addColorToInput('-')" class="color-button bg-red-500"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="errorPopup" class="error-popup">ERROR: Incorrect format!</div>
+
+        <!-- Word suggestions -->
+        {% if words %}
+          <div class="mt-4 results-container">
+            {% for word in words %}
+              <li>{{ word }}</li>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer / "How to play?" -->
+  <div class="footer-text no-select">
+    <span id="howToPlay" class="cursor-pointer">How to play?</span>
+  </div>
+
+  <!-- Easter egg GIF -->
+  <img id="movingGif"
+       class="moving-gif"
+       src="{{ url_for('static', filename='images/dog.gif') }}"
+       alt="Moving GIF">
+
+<div
+  id="history"
+  class="
+    fixed right-8 top-1/2 transform -translate-y-1/2
+    flex-shrink-0
+    w-64           <!-- 16rem wide: 5×2.5rem tiles + gaps + padding -->
+    h-92           <!-- 24rem tall: fits 7×2.5rem rows + spacing + padding -->
+    p-4 bg-gray-800 dark:bg-gray-800
+    rounded-xl
+    shadow-lg
+    overflow-y-auto
+    space-y-2
+    z-50
+  "
+>
+  <h3 class="text-sm font-semibold text-gray-200 dark:text-gray-200 text-center mb-2">
+    History
+  </h3>
+
+  {% for guess in history %}
+    <div class="flex justify-start space-x-2">
+      {% for i in range(0,10,2) %}
+        {% set L = guess[i].upper() %}
+        {% set sym = guess[i+1] %}
+        {% if sym == '+' %}
+          {% set color = 'bg-green-500 text-white' %}
+        {% elif sym == '*' %}
+          {% set color = 'bg-yellow-500 text-white' %}
+        {% else %}
+          {% set color = 'bg-gray-300 text-gray-700' %}
+        {% endif %}
+        <div
+          class="{{ color }}
+                 w-10 h-10
+                 flex items-center justify-center
+                 rounded-md
+                 text-lg font-bold">
+          {{ L }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
