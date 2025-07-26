@@ -16,6 +16,7 @@ class WordleState:
         self.excluded_chars = set()
 
     def update_state(self, guess):
+        print(f"[DEBUG] Updating state with guess: {guess}")
         minus_counts = {}
         plus_and_star_counts = {}
 
@@ -41,6 +42,9 @@ class WordleState:
 
         for letter, count in plus_and_star_counts.items():
             self.letter_counts[letter] = max(self.letter_counts.get(letter, 0), count)
+
+        print(f"[DEBUG] State after update:\n  Green: {self.green_chars}\n  Yellow: {self.yellow_chars}")
+        print(f"  Required: {self.required_chars}\n  Excluded: {self.excluded_chars}\n  Letter counts: {self.letter_counts}")
 
     def is_valid_word(self, word):
         if any(letter in word for letter in self.excluded_chars):
@@ -70,10 +74,12 @@ class WordleState:
 
 
 def find_valid_words(word_list, state):
+    print(f"[DEBUG] Filtering from total {len(word_list)} words...")
     valid_words = []
     for word in word_list:
-        if state.is_valid_word(word):
+        if len(word) == 5 and state.is_valid_word(word):
             valid_words.append(word)
+    print(f"[DEBUG] Found {len(valid_words)} valid words.")
     return valid_words
 
 
@@ -121,6 +127,8 @@ def index():
     with open("words/wordle-ta.txt", "r") as ta_file:
         word_list.extend([word.strip() for word in ta_file])
 
+    print(f"[DEBUG] Word list loaded. Total: {len(word_list)}")
+
     if 'state' not in session:
         state = WordleState()
         session['state'] = state_to_dict(state)
@@ -132,13 +140,17 @@ def index():
 
     if request.method == 'POST':
         guess = request.form.get('guess')
-        if len(guess) == 10 and re.match("([a-z][\+\-\*]){5}", guess):
+        print(f"[DEBUG] Received guess: {guess}")
+        if guess and re.fullmatch(r"([a-z][+\-*]){5}", guess):
             state.update_state(guess)
             words = find_valid_words(word_list, state)
             if words:
                 random_word = random.choice(words)
                 session['random_word'] = random_word
+            else:
+                print("[DEBUG] No valid words found.")
         else:
+            print("[DEBUG] Guess failed regex or was invalid.")
             message = "ERROR: Incorrect format!"
 
     session['state'] = state_to_dict(state)

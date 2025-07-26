@@ -72,31 +72,8 @@ function handleBackspace() {
     }
 }
 
-function chooseColor(letter, event) {
-    selectedLetter = letter;
-    var colorPopup = document.getElementById('colorPopup');
-
-    if (letter === lastSelectedLetter && colorPopup.classList.contains('visible')) {
-        colorPopup.classList.remove('visible');
-        lastSelectedLetter = '';
-        return;
-    }
-
-    lastSelectedLetter = letter;
-
-    if (event) {
-        var buttonRect = event.target.getBoundingClientRect();
-        colorPopup.style.top = `${buttonRect.top + window.scrollY - 5}px`;
-        colorPopup.style.left = `${buttonRect.left + buttonRect.width / 2 - colorPopup.offsetWidth / 2}px`;
-        colorPopup.style.transform = 'translateY(-100%)';
-    }
-
-    colorPopup.classList.add('visible');
-}
-
 function chooseColorFromKey(letter, event) {
     var colorPopup = document.getElementById('colorPopup');
-
     var keyElement = document.querySelector(`.key[data-key="${letter}"]`);
     if (keyElement) {
         if (keyElement.classList.contains('selected')) {
@@ -159,7 +136,7 @@ window.addEventListener('keydown', function(event) {
         event.preventDefault();
         document.querySelector('[type="submit"]').click();
     } else if (key === 'escape') {
-        window.location.href='/reset';
+        window.location.href = '/reset';
     } else if (key === '1') {
         addColorToInput('+');
     } else if (key === '2') {
@@ -201,6 +178,7 @@ document.querySelector('form').addEventListener('submit', function(event) {
     }
 });
 
+// Theme toggle logic
 const themeToggleBtn = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 const currentTheme = localStorage.getItem('theme') || 'light';
@@ -233,6 +211,7 @@ themeToggleBtn.addEventListener('click', () => {
     }
 });
 
+// Dog GIF animation logic
 var gif = document.getElementById('movingGif');
 var width = window.innerWidth;
 var height = window.innerHeight;
@@ -275,14 +254,7 @@ window.addEventListener('resize', () => {
     height = window.innerHeight;
 });
 
-window.addEventListener('keyup', function(event) {
-    const key = event.key.toLowerCase();
-    const keyElement = document.querySelector(`.key[data-key="${key}"]`);
-    if (keyElement) {
-        keyElement.classList.remove('pressed');
-    }
-});
-
+// Custom checkbox logic
 const customCheckbox = document.getElementById('customCheckbox');
 const hiddenCheckbox = document.getElementById('includeExtended');
 
@@ -297,6 +269,7 @@ if (localStorage.getItem('includeExtended') === 'true') {
     hiddenCheckbox.checked = true;
 }
 
+// Modal logic
 document.getElementById('howToPlay').addEventListener('click', function() {
     preventModalClose = true;
     const modal = document.getElementById('howToPlayModal');
