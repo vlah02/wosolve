@@ -119,6 +119,26 @@
 
     <img src="{{ url_for('static', filename='images/dog.gif') }}" alt="Moving GIF" class="moving-gif" id="movingGif">
 
+    <div class="history-container">
+        <h3 class="text-gray-700 mb-2">History</h3>
+        {% for guess in history %}
+          <div class="history-row">
+            {% for i in range(0, 10, 2) %}
+              {% set L = guess[i].upper() %}
+              {% set sym = guess[i+1] %}
+              {% if sym == '+' %}
+                {% set bg = 'bg-green-500' %}
+              {% elif sym == '*' %}
+                {% set bg = 'bg-yellow-500' %}
+              {% else %}
+                {% set bg = 'bg-gray-300' %}
+              {% endif %}
+              <div class="history-box {{ bg }}">{{ L }}</div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

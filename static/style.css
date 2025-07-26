@@ -439,3 +439,37 @@ body.dark-mode {
     background-color: #4a5568;
     color: #ffffff;
 }
+
+.history-container {
+  position: fixed;
+  top: 4rem;      /* below your theme toggle/logo */
+  right: 0;
+  bottom: 0;
+  width: 6rem;
+  padding: 0.5rem;
+  background-color: #f8fafc;
+  overflow-y: auto;
+  border-left: 1px solid #e2e8f0;
+}
+.dark-mode .history-container {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.history-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.history-box {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.25rem;
+  font-weight: bold;
+  color: white;
+  border-radius: 0.375rem;
+  user-select: none;
+}
