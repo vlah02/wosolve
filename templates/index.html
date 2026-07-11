@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WoSoLve</title>
   <link rel="icon" href="{{ url_for('static', filename='images/icon.png') }}" type="image/png">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <script src="{{ url_for('static', filename='vendor/tailwind-3.4.16.js') }}"></script>
+  <script>tailwind.config = { darkMode: ['class', '.dark-mode'] };</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+        integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk"
+        crossorigin="anonymous">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col items-center">
@@ -80,9 +83,9 @@
                       class="bg-indigo-600 text-white button hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
                 <i class="fas fa-check"></i>
               </button>
-              {% if random_word %}
+              {% if suggested_word %}
                 <div class="random-word-tooltip">
-                  Random word to try: {{ random_word }}
+                  Suggested word: {{ suggested_word }}
                 </div>
               {% endif %}
             </div>
@@ -112,11 +115,11 @@
 
         
         {% if words %}
-          <div class="mt-4 results-container">
+          <ul class="mt-4 results-container">
             {% for word in words %}
               <li>{{ word }}</li>
             {% endfor %}
-          </div>
+          </ul>
         {% endif %}
 
       </div>

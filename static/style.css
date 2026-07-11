@@ -1,4 +1,4 @@
-body.dark-mode {
+.dark-mode body {
     background-color: #1a202c;
     color: #a0aec0;
 }
@@ -438,8 +438,4 @@ body.dark-mode {
 .dark-mode .results-container li {
     background-color: #4a5568;
     color: #ffffff;
-}
-
-.dark-mode .dark\:text-white {
-  color: #fff;
 }

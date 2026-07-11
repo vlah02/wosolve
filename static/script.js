@@ -43,17 +43,10 @@ function removeLastLetter() {
 
     var guessBoxes = guessContainer.querySelectorAll('.guess-box');
     if (guessBoxes.length > 0) {
-        var lastBox = guessBoxes[guessBoxes.length - 1];
-        lastBox.style.opacity = 0;
-        lastBox.addEventListener('transitionend', function() {
-            var placeholderBox = document.createElement('div');
-            placeholderBox.classList.add('placeholder-box');
-            guessContainer.replaceChild(placeholderBox, lastBox);
-        });
-
-        if (hiddenGuess.value.length > 0) {
-            hiddenGuess.value = hiddenGuess.value.slice(0, -2);
-        }
+        var placeholderBox = document.createElement('div');
+        placeholderBox.classList.add('placeholder-box');
+        guessContainer.replaceChild(placeholderBox, guessBoxes[guessBoxes.length - 1]);
+        hiddenGuess.value = hiddenGuess.value.slice(0, -2);
     }
 }
 
@@ -136,12 +129,26 @@ window.addEventListener('keydown', function(event) {
         event.preventDefault();
         document.querySelector('[type="submit"]').click();
     } else if (key === 'escape') {
-        window.location.href = '/reset';
-    } else if (key === '1') {
+        var colorPopup = document.getElementById('colorPopup');
+        var modal = document.getElementById('howToPlayModal');
+        if (colorPopup.classList.contains('visible')) {
+            colorPopup.classList.remove('visible');
+            var selectedKey = document.querySelector('.key.selected');
+            if (selectedKey) {
+                selectedKey.classList.remove('selected');
+            }
+            lastSelectedLetter = '';
+            selectedLetter = '';
+        } else if (modal.style.display === 'flex') {
+            closeModal();
+        } else if (confirm('Reset the game?')) {
+            window.location.href = '/reset';
+        }
+    } else if (key === '1' && selectedLetter) {
         addColorToInput('+');
-    } else if (key === '2') {
+    } else if (key === '2' && selectedLetter) {
         addColorToInput('*');
-    } else if (key === '3') {
+    } else if (key === '3' && selectedLetter) {
         addColorToInput('-');
     }
 });
@@ -184,14 +191,14 @@ const themeIcon = document.getElementById('theme-icon');
 const currentTheme = localStorage.getItem('theme') || 'light';
 
 if (currentTheme === 'dark') {
-    document.body.classList.add('dark-mode');
+    document.documentElement.classList.add('dark-mode');
     themeIcon.classList.remove('fa-moon');
     themeIcon.classList.add('fa-sun');
 }
 
 themeToggleBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+    document.documentElement.classList.toggle('dark-mode');
+    const theme = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
     localStorage.setItem('theme', theme);
 
     if (theme === 'dark') {
@@ -279,11 +286,6 @@ document.getElementById('howToPlay').addEventListener('click', function() {
         modal.style.opacity = '1';
         preventModalClose = false;
     }, 10);
-    if (document.body.classList.contains('dark-mode')) {
-        modal.querySelector('.modal-content').classList.add('dark-mode');
-    } else {
-        modal.querySelector('.modal-content').classList.remove('dark-mode');
-    }
 });
 
 document.addEventListener('click', function(event) {
