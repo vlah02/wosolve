@@ -28,6 +28,9 @@ export function initGame(wordLists, initUI_) {
   }
   state = load();
   if (state.mode === 'practice' && !state.practice.secret) newPracticeGame();
+  if (state.mode === 'practice' && state.practice.dateLabel && !state.practice.done) {
+    UI.showBanner('Wordle from ' + state.practice.dateLabel + ' — guess it in 6!', 'info');
+  }
   document.documentElement.dataset.mode = state.mode;
   document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode: state.mode } }));
   initUI_({ onKey, onCycle, onMark, onUndo, onRemoveRow });
@@ -103,12 +106,14 @@ function onPlayDate(dateStr) {
     return;
   }
   state.practice = { secret: word, rows: [], done: false, dateLabel: dateStr };
+  entry = { letters: '', marks: '' };
   UI.showBanner(`Wordle from ${dateStr} — guess it in 6!`, 'info');
   save(); rerender();
 }
 
 function onPlayRandom() {
   newPracticeGame();
+  entry = { letters: '', marks: '' };
   UI.clearBanner();
   maybeShowPracticeIntro();
   save(); rerender();
