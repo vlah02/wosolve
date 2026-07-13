@@ -6,10 +6,15 @@ import { initStats } from './stats.js';
 import { initCelebrate } from './celebrate.js';
 
 async function fetchLists() {
-  const [a, e, f] = await Promise.all([
-    fetch('/static/data/answers.json'), fetch('/static/data/extended.json'), fetch('/static/data/freq.json')]);
-  if (!a.ok || !e.ok || !f.ok) throw new Error('word list fetch failed');
-  return { answers: await a.json(), extended: await e.json(), freq: await f.json() };
+  const [a, e] = await Promise.all([
+    fetch('/static/data/answers.json'), fetch('/static/data/extended.json')]);
+  if (!a.ok || !e.ok) throw new Error('word list fetch failed');
+  let freq = {};
+  try {
+    const f = await fetch('/static/data/freq.json');
+    if (f.ok) freq = await f.json();
+  } catch {}
+  return { answers: await a.json(), extended: await e.json(), freq };
 }
 
 async function boot() {
