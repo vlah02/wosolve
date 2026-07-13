@@ -21,23 +21,10 @@ sys.modules["flask"] = flask_stub
 sys.path.insert(0, PROJECT_ROOT)
 from app import (WordleState, find_valid_words, state_to_dict, state_from_dict,
                  suggest_word, ANSWER_WORDS, EXTENDED_WORDS)
+from solver_ref import feedback
 
 def wordle_feedback(answer, guess):
-    fb = [None]*5
-    remaining = {}
-    for i in range(5):
-        if guess[i] == answer[i]:
-            fb[i] = '+'
-        else:
-            remaining[answer[i]] = remaining.get(answer[i], 0) + 1
-    for i in range(5):
-        if fb[i] is None:
-            if remaining.get(guess[i], 0) > 0:
-                fb[i] = '*'
-                remaining[guess[i]] -= 1
-            else:
-                fb[i] = '-'
-    return ''.join(guess[i] + fb[i] for i in range(5))
+    return feedback(answer, guess)
 
 ok = True
 
@@ -118,6 +105,67 @@ cands = find_valid_words(ANSWER_WORDS + EXTENDED_WORDS, st)
 mid = suggest_word(cands)
 print(f"5. suggested opener: {op}; after medal/salsa: {mid} (in candidates: {mid in cands}); empty -> {suggest_word([])}")
 ok &= op is not None and mid in cands and suggest_word([]) is None
+
+# Test functions from Task 1 brief
+def test_feedback_duplicates():
+    from solver_ref import feedback
+    assert feedback("medal", "salsa") == "s-a*l*s-a-"
+    assert feedback("crest", "geese") == "g-e-e+s+e-"
+    assert feedback("melee", "geese") == "g-e+e*s-e+"
+
+def test_rank_suggestions_information_phase():
+    from solver_ref import rank_suggestions
+    # >20 candidates: distinct-letter coverage wins; repeated-letter words rank lower
+    cands = ["slate", "crane", "eerie", "geese"] + [f"{c}{c}{c}{c}{c}" for c in "abdefghijklmnopqrst"]
+    ranked = rank_suggestions(cands, set(cands))
+    assert ranked[0] in ("slate", "crane")          # 5 distinct common letters
+    assert ranked.index("eerie") > ranked.index("slate")
+
+def test_rank_suggestions_likelihood_phase():
+    from solver_ref import rank_suggestions
+    # <=20 candidates: answer-list words rank above non-answers
+    cands = ["aback", "zonal", "aahed"]
+    ranked = rank_suggestions(cands, {"aback", "zonal"})
+    assert set(ranked[:2]) == {"aback", "zonal"}
+    assert ranked[2] == "aahed"
+
+def test_rank_deterministic():
+    from solver_ref import rank_suggestions
+    cands = ["medal", "decal"]
+    assert rank_suggestions(cands, set(cands)) == rank_suggestions(list(reversed(cands)), set(cands))
+
+# Run new tests
+try:
+    test_feedback_duplicates()
+    print("6. test_feedback_duplicates: PASS")
+    ok &= True
+except AssertionError as e:
+    print(f"6. test_feedback_duplicates: FAIL - {e}")
+    ok = False
+
+try:
+    test_rank_suggestions_information_phase()
+    print("7. test_rank_suggestions_information_phase: PASS")
+    ok &= True
+except AssertionError as e:
+    print(f"7. test_rank_suggestions_information_phase: FAIL - {e}")
+    ok = False
+
+try:
+    test_rank_suggestions_likelihood_phase()
+    print("8. test_rank_suggestions_likelihood_phase: PASS")
+    ok &= True
+except AssertionError as e:
+    print(f"8. test_rank_suggestions_likelihood_phase: FAIL - {e}")
+    ok = False
+
+try:
+    test_rank_deterministic()
+    print("9. test_rank_deterministic: PASS")
+    ok &= True
+except AssertionError as e:
+    print(f"9. test_rank_deterministic: FAIL - {e}")
+    ok = False
 
 print("\nALL PASS" if ok else "\nFAILURES PRESENT")
 sys.exit(0 if ok else 1)
