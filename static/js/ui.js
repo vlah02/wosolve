@@ -33,6 +33,7 @@ export function initUI(callbacks) {
 }
 
 function onPhysicalKey(e) {
+  if (e.target.matches?.('input, select, textarea')) return;
   if (e.key === 'Escape') {
     const open = document.querySelector('dialog[open]');
     if (open) { e.preventDefault(); open.close(); return; }

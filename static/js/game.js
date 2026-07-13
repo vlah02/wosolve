@@ -100,7 +100,7 @@ function initPracticeControls() {
 }
 
 function onPlayDate(dateStr) {
-  if (!dateStr) return;
+  if (!dateStr) { UI.showBanner('Pick a date first', 'warn', []); return; }
   const word = byDate[dateStr];
   if (!word) {
     UI.showBanner('No answer on record for that date', 'warn');
@@ -151,10 +151,12 @@ function onMark(i, mark) {
 function submit() {
   if (entry.letters.length !== 5) return;
   if (state.mode === 'solver') {
-    state.solverRows.push({ word: entry.letters, marks: entry.marks });
-    if (entry.marks === '+++++') trySolve(state.solverRows.length);
+    const word = entry.letters;
+    state.solverRows.push({ word, marks: entry.marks });
+    if (entry.marks === '+++++' && trySolve(state.solverRows.length))
+      UI.showBanner(`It's ${word.toUpperCase()}!`, 'win', [{ label: 'See analysis', onAction: seeAnalysis }]);
   } else {
-    if (!pool().includes(entry.letters)) {
+    if (entry.letters !== state.practice.secret && !pool().includes(entry.letters)) {
       UI.showBanner('Not in the word list', 'warn');
       rerender({ shake: true });
       return;
@@ -263,6 +265,6 @@ function scoreOf(w, cands) {
 }
 
 function hintFor() {
-  const cands = S.filterWords(lists.answers, S.stateFromRows(state.practice.rows));
+  const cands = S.filterWords(pool(), S.stateFromRows(state.practice.rows));
   return S.rankSuggestions(cands, new Set(lists.answers), lists.freq)[0] ?? '';
 }
