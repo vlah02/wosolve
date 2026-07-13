@@ -110,6 +110,7 @@ function onPlayDate(dateStr) {
   entry = { letters: '', marks: '' };
   UI.showBanner(`Wordle from ${dateStr} — guess it in 6!`, 'info');
   save(); rerender();
+  UI.animateBoardReset();
 }
 
 function onPlayRandom() {
@@ -118,6 +119,7 @@ function onPlayRandom() {
   UI.clearBanner();
   maybeShowPracticeIntro();
   save(); rerender();
+  UI.animateBoardReset();
 }
 
 function onKey(k) {
@@ -206,7 +208,8 @@ function onRemoveRow(i) {
 function rerender(opts = {}) {
   const r = rows();
   const showEntry = state.mode === 'solver' || (!state.practice.done && r.length < 6);
-  UI.renderRows(r, showEntry ? entry : null, { ...opts, removable: state.mode === 'solver' });
+  UI.renderRows(r, showEntry ? entry : null,
+    { ...opts, removable: state.mode === 'solver', fixedRows: state.mode === 'practice' ? 6 : null });
   UI.renderKeyboard(r); // both modes: derived from committed rows
   if (state.mode === 'solver') {
     let cands = S.filterWords(pool(), S.stateFromRows(r));
@@ -266,5 +269,8 @@ function scoreOf(w, cands) {
 
 function hintFor() {
   const cands = S.filterWords(pool(), S.stateFromRows(state.practice.rows));
-  return S.rankSuggestions(cands, new Set(lists.answers), lists.freq)[0] ?? '';
+  const ranked = S.rankSuggestions(cands, new Set(lists.answers), lists.freq);
+  const secret = state.practice.secret;
+  const greenShare = ranked.find(w => w.split('').some((c, i) => c === secret[i]));
+  return greenShare ?? ranked[0] ?? '';
 }

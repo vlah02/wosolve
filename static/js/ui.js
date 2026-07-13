@@ -68,7 +68,7 @@ function buildKeyboard() {
       b.dataset.key = ch;
       b.textContent = ch === '\n' ? '↵' : ch === '\b' ? '⌫' : ch.toUpperCase();
       if (ch === '\n' || ch === '\b') b.classList.add('wide');
-      b.onclick = () => cb.onKey(ch);
+      b.onclick = () => { cb.onKey(ch); b.blur(); };
       row.appendChild(b);
     }
     kb.appendChild(row);
@@ -109,6 +109,10 @@ export function renderRows(rows, entry, opts = {}) {
   } else {
     focusedTile = -1;
     lastEntryLen = 0;
+  }
+  if (opts.fixedRows) {
+    while (board.children.length > opts.fixedRows) board.removeChild(board.lastElementChild);
+    while (board.children.length < opts.fixedRows) board.appendChild(rowEl(' '.repeat(5), ' '.repeat(5), false));
   }
 }
 
@@ -171,6 +175,9 @@ export function renderSuggestions({ top, count, scores }) {
 export function showBanner(text, kind, actions = []) {
   const b = $('#banner');
   b.hidden = false; b.className = kind;
+  b.classList.remove('banner-pop');
+  void b.offsetWidth; // restart animation
+  b.classList.add('banner-pop');
   b.innerHTML = text + actions.map((_, i) => ` <button class="banner-act"></button>`).join('');
   b.querySelectorAll('.banner-act').forEach((btn, i) => {
     btn.textContent = actions[i].label;
@@ -178,6 +185,18 @@ export function showBanner(text, kind, actions = []) {
   });
 }
 export function clearBanner() { const b = $('#banner'); b.hidden = true; b.innerHTML = ''; }
+
+export function animateBoardReset() {
+  const board = $('#board');
+  board.classList.remove('dealing');
+  void board.offsetWidth; // restart animation
+  board.classList.add('dealing');
+  const rowEls = board.querySelectorAll('.brow');
+  const cleanup = () => board.classList.remove('dealing');
+  const last = rowEls[rowEls.length - 1];
+  if (last) last.addEventListener('animationend', cleanup, { once: true });
+  setTimeout(cleanup, 1000);
+}
 
 const LOGO = [['w', 'g'], ['o', 'n'], ['s', 'y'], ['o', 'g'], ['l', 'n'], ['v', 'y'], ['e', 'g']];
 function buildLogo() {
