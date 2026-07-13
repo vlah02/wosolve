@@ -153,6 +153,7 @@ export function renderSuggestions({ top, count, scores }) {
     : `<div class="panel">
          <h5>Best next guess</h5>
          <div class="hero-word">${top[0] ?? ''}</div>
+         <div class="hero-sub">likely + familiar words first</div>
          <button class="count-chip js-toggle-list">${count} word${count === 1 ? '' : 's'} left · see all</button>
          <div class="list-caption" hidden>Fuller bar = guess that narrows the list more</div>
          <div class="word-list" hidden>

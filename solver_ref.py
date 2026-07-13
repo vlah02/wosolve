@@ -98,21 +98,26 @@ def feedback(answer, guess):
     return ''.join(guess[i] + marks[i] for i in range(5))
 
 
-def rank_suggestions(candidates, answer_set):
+def rank_suggestions(candidates, answer_set, freq=None):
     if not candidates:
         return []
-    freq = {}
+    if freq is None:
+        freq = {}
+    letter_freq = {}
     for w in candidates:
         for l in set(w):
-            freq[l] = freq.get(l, 0) + 1
+            letter_freq[l] = letter_freq.get(l, 0) + 1
+    tier = lambda w: freq.get(w, 30)
     if len(candidates) > 20:
         pos = [dict() for _ in range(5)]
         for w in candidates:
             for i, l in enumerate(w):
                 pos[i][l] = pos[i].get(l, 0) + 1
-        key = lambda w: (-sum(freq[l] for l in set(w)),
-                         -sum(pos[i].get(l, 0) for i, l in enumerate(w)), w)
+        key = lambda w: (-sum(letter_freq[l] for l in set(w)),
+                         -sum(pos[i].get(l, 0) for i, l in enumerate(w)),
+                         tier(w), w)
     else:
         key = lambda w: (0 if w in answer_set else 1,
-                         -sum(freq[l] for l in set(w)), w)
+                         tier(w),
+                         -sum(letter_freq[l] for l in set(w)), w)
     return sorted(candidates, key=key)

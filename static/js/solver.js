@@ -50,20 +50,21 @@ export function feedback(answer, guess) {
   return marks.join('');
 }
 
-export function rankSuggestions(candidates, answerSet) {
+export function rankSuggestions(candidates, answerSet, freq = {}) {
   if (!candidates.length) return [];
-  const freq = {};
-  for (const w of candidates) for (const l of new Set(w)) freq[l] = (freq[l] || 0) + 1;
-  const coverage = w => { let s = 0; for (const l of new Set(w)) s += freq[l]; return s; };
+  const letterFreq = {};
+  for (const w of candidates) for (const l of new Set(w)) letterFreq[l] = (letterFreq[l] || 0) + 1;
+  const coverage = w => { let s = 0; for (const l of new Set(w)) s += letterFreq[l]; return s; };
+  const tier = w => freq[w] ?? 30;
   let cmp;
   if (candidates.length > 20) {
     const pos = Array.from({length: 5}, () => ({}));
     for (const w of candidates) for (let i = 0; i < 5; i++) pos[i][w[i]] = (pos[i][w[i]] || 0) + 1;
     const posScore = w => { let s = 0; for (let i = 0; i < 5; i++) s += pos[i][w[i]] || 0; return s; };
-    cmp = (a, b) => coverage(b) - coverage(a) || posScore(b) - posScore(a) || (a < b ? -1 : 1);
+    cmp = (a, b) => coverage(b) - coverage(a) || posScore(b) - posScore(a) || tier(a) - tier(b) || (a < b ? -1 : 1);
   } else {
     const inAns = w => answerSet.has(w) ? 0 : 1;
-    cmp = (a, b) => inAns(a) - inAns(b) || coverage(b) - coverage(a) || (a < b ? -1 : 1);
+    cmp = (a, b) => inAns(a) - inAns(b) || tier(a) - tier(b) || coverage(b) - coverage(a) || (a < b ? -1 : 1);
   }
   return [...candidates].sort(cmp);
 }

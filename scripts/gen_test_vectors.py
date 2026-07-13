@@ -5,6 +5,7 @@ from solver_ref import WordleState, find_valid_words, feedback, rank_suggestions
 
 ANSWERS = json.load(open(ROOT / "static/data/answers.json"))
 EXTENDED = json.load(open(ROOT / "static/data/extended.json"))
+FREQ = json.load(open(ROOT / "static/data/freq.json"))
 rng = random.Random(42)
 
 fb = []
@@ -26,7 +27,7 @@ for trial in range(60):
         rows.append({"word": g, "marks": enc[1::2]})
         st.update_state(enc)
     cands = find_valid_words(pool, st)
-    ranked = rank_suggestions(cands, set(ANSWERS))
+    ranked = rank_suggestions(cands, set(ANSWERS), FREQ)
     games.append({"list": "both" if use_ext else "answers", "rows": rows,
                   "count": len(cands), "first": cands[:10], "top": ranked[:3]})
 

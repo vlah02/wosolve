@@ -8,6 +8,7 @@ const out = document.getElementById('out');
 const V = await (await fetch('/static/data/test-vectors.json')).json();
 const ANSWERS = await (await fetch('/static/data/answers.json')).json();
 const EXTENDED = await (await fetch('/static/data/extended.json')).json();
+const FREQ = await (await fetch('/static/data/freq.json')).json();
 const answerSet = new Set(ANSWERS);
 let pass = 0; const fails = [];
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -19,7 +20,7 @@ for (const [gi, g] of V.games.entries()) {
   const pool = g.list === 'both' ? ANSWERS.concat(EXTENDED) : ANSWERS;
   const st = S.stateFromRows(g.rows);
   const cands = S.filterWords(pool, st);
-  const top = S.rankSuggestions(cands, answerSet).slice(0, 3);
+  const top = S.rankSuggestions(cands, answerSet, FREQ).slice(0, 3);
   eq(cands.length, g.count) && eq(cands.slice(0, 10), g.first) && eq(top, g.top)
     ? pass++ : fails.push(`game ${gi}: count ${cands.length}/${g.count} top ${top}/${g.top}`);
 }

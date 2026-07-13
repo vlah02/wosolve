@@ -9,6 +9,7 @@ const read = p => JSON.parse(new TextDecoder().decode(GLib.file_get_contents(her
 const V = read('static/data/test-vectors.json');
 const ANSWERS = read('static/data/answers.json');
 const EXTENDED = read('static/data/extended.json');
+const FREQ = read('static/data/freq.json');
 const answerSet = new Set(ANSWERS);
 
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -25,7 +26,7 @@ for (const [gi, g] of V.games.entries()) {
   const pool = g.list === 'both' ? ANSWERS.concat(EXTENDED) : ANSWERS;
   const st = S.stateFromRows(g.rows);
   const cands = S.filterWords(pool, st);
-  const top = S.rankSuggestions(cands, answerSet).slice(0, 3);
+  const top = S.rankSuggestions(cands, answerSet, FREQ).slice(0, 3);
   eq(cands.length, g.count) && eq(cands.slice(0, 10), g.first) && eq(top, g.top)
     ? pass++ : fails.push(`game ${gi}: count ${cands.length}/${g.count} top ${top}/${g.top}`);
 }

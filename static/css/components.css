@@ -173,3 +173,5 @@ html { scrollbar-color: var(--tile-gray) transparent; scrollbar-width: thin; }
 html[data-mode="solver"] #stats-content { display: none; }
 html[data-mode="solver"] #drawer-tabs [data-tab="stats"] { display: none; }
 html[data-mode="solver"] #stats-btn { display: none; }
+
+.hero-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }

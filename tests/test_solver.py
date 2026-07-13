@@ -87,6 +87,38 @@ def test_rank_suggestions_likelihood_phase():
     assert set(ranked[:2]) == {"aback", "zonal"}
     assert ranked[2] == "aahed"
 
+def test_rank_suggestions_freq_tiebreak_info_phase():
+    # >20 candidates, two words with identical coverage/positional score (a word
+    # and its letter-disjoint-from-fillers reverse): the commoner (lower tier)
+    # word must win, even when that contradicts plain alphabetical order.
+    common, rare = "edcba", "abcde"          # alphabetically "abcde" < "edcba"
+    letters = "fghijklmnopqrstuvwxyz"
+    fillers = [(letters + letters)[i:i + 5] for i in range(19)]
+    cands = [common, rare] + fillers
+    assert len(cands) > 20
+    freq = {common: 3, rare: 27}              # common has the lower (rarer-tier-number = commoner) tier
+    ranked = rank_suggestions(cands, set(cands), freq)
+    assert ranked.index(common) < ranked.index(rare)
+
+def test_rank_suggestions_freq_tiebreak_likelihood_phase():
+    # <=20 candidates, both in the answer set: tier must decide before coverage
+    # and before alphabetical order.
+    cands = ["medal", "decal"]                # alphabetically "decal" < "medal"
+    freq = {"medal": 3, "decal": 20}
+    ranked = rank_suggestions(cands, set(cands), freq)
+    assert ranked[0] == "medal"
+
+def test_rank_suggestions_freq_absent_word_gets_tier_30():
+    cands = ["medal", "decal"]
+    freq = {"decal": 5}                       # "medal" absent -> tier 30, loses to tier 5
+    ranked = rank_suggestions(cands, set(cands), freq)
+    assert ranked[0] == "decal"
+
+def test_rank_suggestions_freq_none_matches_empty():
+    cands = ["aback", "zonal", "aahed"]
+    ans = {"aback", "zonal"}
+    assert rank_suggestions(cands, ans) == rank_suggestions(cands, ans, None) == rank_suggestions(cands, ans, {})
+
 def test_rank_deterministic():
     cands = ["medal", "decal"]
     assert rank_suggestions(cands, set(cands)) == rank_suggestions(list(reversed(cands)), set(cands))
@@ -108,6 +140,10 @@ named_tests = [
     ("test_feedback_duplicates", test_feedback_duplicates),
     ("test_rank_suggestions_information_phase", test_rank_suggestions_information_phase),
     ("test_rank_suggestions_likelihood_phase", test_rank_suggestions_likelihood_phase),
+    ("test_rank_suggestions_freq_tiebreak_info_phase", test_rank_suggestions_freq_tiebreak_info_phase),
+    ("test_rank_suggestions_freq_tiebreak_likelihood_phase", test_rank_suggestions_freq_tiebreak_likelihood_phase),
+    ("test_rank_suggestions_freq_absent_word_gets_tier_30", test_rank_suggestions_freq_absent_word_gets_tier_30),
+    ("test_rank_suggestions_freq_none_matches_empty", test_rank_suggestions_freq_none_matches_empty),
     ("test_rank_deterministic", test_rank_deterministic),
     ("test_generated_files_fresh", test_generated_files_fresh),
 ]

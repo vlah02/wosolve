@@ -157,7 +157,7 @@ function rerender(opts = {}) {
   UI.renderKeyboard(r); // both modes: derived from committed rows
   if (state.mode === 'solver') {
     const cands = S.filterWords(pool(), S.stateFromRows(r));
-    const ranked = S.rankSuggestions(cands, new Set(lists.answers));
+    const ranked = S.rankSuggestions(cands, new Set(lists.answers), lists.freq);
     const topScore = ranked.length ? scoreOf(ranked[0], cands) : 1;
     const top = ranked.slice(0, 30);
     UI.renderSuggestions({ top, count: cands.length,
@@ -198,5 +198,5 @@ function scoreOf(w, cands) {
 
 function hintFor() {
   const cands = S.filterWords(lists.answers, S.stateFromRows(state.practice.rows));
-  return S.rankSuggestions(cands, new Set(lists.answers))[0] ?? '';
+  return S.rankSuggestions(cands, new Set(lists.answers), lists.freq)[0] ?? '';
 }
