@@ -16,6 +16,7 @@ function load() {
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
 let entry = { letters: '', marks: '' };
+let practiceTileInfoShown = false; // one-time-per-session nudge
 
 export function initGame(wordLists, initUI_) {
   lists = wordLists;
@@ -26,6 +27,13 @@ export function initGame(wordLists, initUI_) {
     b.onclick = () => switchMode(b.dataset.mode));
   document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
   document.addEventListener('wosolve:settings-changed', e => { if (e.detail.key === 'extended') rerender(); });
+  const board = document.getElementById('board');
+  if (board) board.addEventListener('click', e => {
+    if (state.mode !== 'practice' || practiceTileInfoShown) return;
+    if (!e.target.closest('.committed .tile')) return;
+    practiceTileInfoShown = true;
+    UI.showBanner('Colors are automatic in practice mode', 'info');
+  });
   rerender();
 }
 
@@ -42,7 +50,15 @@ function switchMode(mode) {
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === mode));
   UI.clearBanner();
+  maybeShowPracticeIntro();
   save(); rerender();
+}
+
+// Onboarding nudge for practice mode: only for a genuinely fresh game (no
+// guesses submitted yet), never when merely resuming one already in progress.
+function maybeShowPracticeIntro() {
+  if (state.mode === 'practice' && state.practice.rows.length === 0)
+    UI.showBanner("I picked a secret word — guess it in 6 tries!", 'info');
 }
 
 function newPracticeGame() {
@@ -90,6 +106,7 @@ function submit() {
     }
     const marks = S.feedback(state.practice.secret, entry.letters);
     state.practice.rows.push({ word: entry.letters, marks });
+    if (state.practice.rows.length === 1) UI.clearBanner();
     if (marks === '+++++') {
       state.practice.done = true;
       solved(state.practice.rows.length);
@@ -110,7 +127,7 @@ function solved(guesses) {
 }
 
 function replay() {
-  newPracticeGame(); UI.clearBanner(); save(); rerender();
+  newPracticeGame(); UI.clearBanner(); maybeShowPracticeIntro(); save(); rerender();
 }
 
 function onUndo() {

@@ -19,9 +19,24 @@
         <button data-mode="practice" role="tab">Practice</button>
       </div>
       <div id="top-actions">
-        <button id="stats-btn" title="Stats">📊</button>
-        <button id="help-btn" title="How to play">?</button>
-        <button id="settings-btn" title="Settings">⚙</button>
+        <button id="stats-btn" title="Stats">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 21V9M12 21V3M19 21v-8"/>
+          </svg>
+        </button>
+        <button id="help-btn" title="How to play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.2-3 4"/>
+            <path d="M12 17.5h.01"/>
+          </svg>
+        </button>
+        <button id="settings-btn" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>
+          </svg>
+        </button>
       </div>
     </header>
     <main id="layout-root">
@@ -41,6 +56,7 @@
     </main>
   </div>
   <dialog id="settings-modal">
+    <div class="dialog-body">
     <h3>Settings</h3>
     <div class="set-group"><h5>Skin</h5>
       <div class="swatches" data-setting="skin" role="radiogroup" aria-label="Skin">
@@ -64,14 +80,19 @@
       <label class="set-check"><input type="checkbox" id="set-extended"> Include extended word list</label>
     </div>
     <button class="close-modal">Done</button>
+    </div>
   </dialog>
   <dialog id="help-modal">
+    <div class="dialog-body">
     <h3>How to play</h3>
     <p><b>Solver:</b> type your Wordle guess, then tap each tile to cycle its color
       (gray → yellow → green) to match what Wordle showed you. Press Enter — the word list
       narrows and the best next guess appears. Keys 1/2/3 also set colors.</p>
-    <p><b>Practice:</b> the app picks a secret word; guess it in six tries.</p>
+    <p><b>Practice:</b> the app picks a secret word; guess it in six tries. Colors are applied
+      automatically — green = right letter right spot, yellow = right letter wrong spot.
+      Use the Hint card if you're stuck.</p>
     <button class="close-modal">Close</button>
+    </div>
   </dialog>
   <img id="movingGif" class="moving-gif" src="{{ url_for('static', filename='images/dog.gif') }}" alt="">
   <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>

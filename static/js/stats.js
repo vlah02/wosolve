@@ -52,9 +52,10 @@ function openModal() {
   if (!d) {
     d = document.createElement('dialog'); d.id = 'stats-modal';
     document.body.appendChild(d);
+    d.addEventListener('click', e => { if (e.target === d) d.close(); });
   }
-  d.innerHTML = document.getElementById('stats-content').innerHTML +
-    '<button class="close-modal">Close</button>';
+  d.innerHTML = '<div class="dialog-body">' + document.getElementById('stats-content').innerHTML +
+    '<button class="close-modal">Close</button></div>';
   d.querySelector('.close-modal').onclick = () => d.close();
   d.showModal();
 }

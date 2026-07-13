@@ -11,17 +11,30 @@ export function initUI(callbacks) {
   window.addEventListener('keydown', onPhysicalKey);
   $('#help-btn').onclick = () => $('#help-modal').showModal();
   document.querySelectorAll('.close-modal').forEach(b => b.onclick = () => b.closest('dialog').close());
+  document.querySelectorAll('dialog').forEach(d =>
+    d.addEventListener('click', e => { if (e.target === d) d.close(); }));
   document.addEventListener('click', e => {
     const undo = e.target.closest('.js-undo');
     if (undo) { cb.onUndo(); return; }
     const tog = e.target.closest('.js-toggle-list');
-    if (tog) { const l = tog.parentElement.querySelector('.word-list'); if (l) l.hidden = !l.hidden; return; }
+    if (tog) {
+      const panel = tog.parentElement;
+      const l = panel.querySelector('.word-list');
+      const cap = panel.querySelector('.list-caption');
+      if (l) l.hidden = !l.hidden;
+      if (cap) cap.hidden = !cap.hidden;
+      return;
+    }
     const blur = e.target.closest('.js-unblur');
     if (blur) blur.classList.remove('blurred');
   });
 }
 
 function onPhysicalKey(e) {
+  if (e.key === 'Escape') {
+    const open = document.querySelector('dialog[open]');
+    if (open) { e.preventDefault(); open.close(); return; }
+  }
   if (e.target.closest('dialog')) return;
   const k = e.key.toLowerCase();
   if (/^[a-z]$/.test(k)) { e.preventDefault(); cb.onKey(k); }
@@ -132,8 +145,9 @@ export function renderSuggestions({ top, count, scores }) {
          <h5>Best next guess</h5>
          <div class="hero-word">${top[0] ?? ''}</div>
          <button class="count-chip js-toggle-list">${count} word${count === 1 ? '' : 's'} left · see all</button>
+         <div class="list-caption" hidden>Fuller bar = guess that narrows the list more</div>
          <div class="word-list" hidden>
-           ${top.map((w, i) => `<div class="srow">${w}<span class="bar"><i style="width:${scores[i]}%"></i></span></div>`).join('')}
+           ${top.map((w, i) => `<div class="srow">${w}<span class="bar" title="How much this guess narrows the remaining words"><i style="width:${scores[i]}%"></i></span></div>`).join('')}
          </div>
        </div>`;
   $('#suggest-content').innerHTML = html;
