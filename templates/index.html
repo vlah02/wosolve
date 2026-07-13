@@ -40,7 +40,13 @@
       </div>
     </header>
     <main id="layout-root">
-      <section id="board-zone"><div id="banner" hidden></div><div id="board"></div></section>
+      <section id="board-zone"><div id="banner" hidden></div>
+        <div id="practice-controls">
+          <input type="date" id="practice-date" min="2021-06-19">
+          <button id="practice-date-btn" class="count-chip">Play this date</button>
+          <button id="practice-random-btn" class="count-chip">Random word</button>
+        </div>
+        <div id="board"></div></section>
       <section id="suggest-slot"><div id="suggest-content"></div></section>
       <section id="keyboard-zone"><div id="keyboard"></div></section>
       <aside id="side-panel"><div id="side-suggest"></div><div id="stats-content"></div></aside>
@@ -78,6 +84,8 @@
       </div></div>
     <div class="set-group"><h5>Words</h5>
       <label class="set-check"><input type="checkbox" id="set-extended"> Include extended word list</label>
+      <label class="set-check"><input type="checkbox" id="set-hidepast"> Hide past Wordle answers
+        <span id="hidepast-through" class="set-sub"></span></label>
     </div>
     <button class="close-modal">Done</button>
     </div>

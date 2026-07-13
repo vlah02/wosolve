@@ -14,7 +14,12 @@ async function fetchLists() {
     const f = await fetch('/static/data/freq.json');
     if (f.ok) freq = await f.json();
   } catch {}
-  return { answers: await a.json(), extended: await e.json(), freq };
+  let pastAnswers = null;
+  try {
+    const p = await fetch('/static/data/past-answers.json');
+    if (p.ok) pastAnswers = await p.json();
+  } catch {}
+  return { answers: await a.json(), extended: await e.json(), freq, pastAnswers };
 }
 
 async function boot() {
@@ -25,6 +30,11 @@ async function boot() {
     document.querySelector('#board-zone').innerHTML =
       '<div class="panel">Could not load word lists. <button class="count-chip" onclick="location.reload()">Retry</button></div>';
     return;
+  }
+  const through = document.getElementById('hidepast-through');
+  if (through) {
+    through.hidden = !lists.pastAnswers;
+    through.textContent = lists.pastAnswers ? `through ${lists.pastAnswers.meta.through}` : '';
   }
   initGame(lists, initUI);
   initStats();

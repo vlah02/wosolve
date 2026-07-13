@@ -4,9 +4,10 @@ import { getSettings } from './settings.js';
 
 const KEY = 'wosolve.game.v1';
 let lists, state;
+let pastSet = new Set(), byDate = {}, pastMeta = null;
 
 const fresh = () => ({ mode: 'solver', solverRows: [], solvedKey: '',
-  practice: { secret: null, rows: [], done: false } });
+  practice: { secret: null, rows: [], done: false, dateLabel: null } });
 
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.mode) return s; }
@@ -20,6 +21,11 @@ let practiceTileInfoShown = false; // one-time-per-session nudge
 
 export function initGame(wordLists, initUI_) {
   lists = wordLists;
+  if (wordLists.pastAnswers) {
+    byDate = wordLists.pastAnswers.byDate;
+    pastMeta = wordLists.pastAnswers.meta;
+    pastSet = new Set(Object.values(byDate));
+  }
   state = load();
   if (state.mode === 'practice' && !state.practice.secret) newPracticeGame();
   document.documentElement.dataset.mode = state.mode;
@@ -28,7 +34,10 @@ export function initGame(wordLists, initUI_) {
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.onclick = () => switchMode(b.dataset.mode));
   document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
-  document.addEventListener('wosolve:settings-changed', e => { if (e.detail.key === 'extended') rerender(); });
+  document.addEventListener('wosolve:settings-changed', e => {
+    if (e.detail.key === 'extended' || e.detail.key === 'hidePast') rerender();
+  });
+  initPracticeControls();
   const board = document.getElementById('board');
   if (board) board.addEventListener('click', e => {
     if (state.mode !== 'practice' || practiceTileInfoShown) return;
@@ -68,7 +77,41 @@ function maybeShowPracticeIntro() {
 function newPracticeGame() {
   state.practice = {
     secret: lists.answers[Math.floor(Math.random() * lists.answers.length)],
-    rows: [], done: false };
+    rows: [], done: false, dateLabel: null };
+}
+
+function initPracticeControls() {
+  const dateInput = document.getElementById('practice-date');
+  const dateBtn = document.getElementById('practice-date-btn');
+  const randomBtn = document.getElementById('practice-random-btn');
+  if (!dateInput || !dateBtn || !randomBtn) return;
+  if (pastMeta) {
+    dateInput.max = pastMeta.through;
+  } else {
+    dateInput.disabled = true;
+    dateBtn.disabled = true;
+  }
+  dateBtn.onclick = () => onPlayDate(dateInput.value);
+  randomBtn.onclick = () => onPlayRandom();
+}
+
+function onPlayDate(dateStr) {
+  if (!dateStr) return;
+  const word = byDate[dateStr];
+  if (!word) {
+    UI.showBanner('No answer on record for that date', 'warn');
+    return;
+  }
+  state.practice = { secret: word, rows: [], done: false, dateLabel: dateStr };
+  UI.showBanner(`Wordle from ${dateStr} — guess it in 6!`, 'info');
+  save(); rerender();
+}
+
+function onPlayRandom() {
+  newPracticeGame();
+  UI.clearBanner();
+  maybeShowPracticeIntro();
+  save(); rerender();
 }
 
 function onKey(k) {
@@ -156,7 +199,8 @@ function rerender(opts = {}) {
   UI.renderRows(r, showEntry ? entry : null, { ...opts, removable: state.mode === 'solver' });
   UI.renderKeyboard(r); // both modes: derived from committed rows
   if (state.mode === 'solver') {
-    const cands = S.filterWords(pool(), S.stateFromRows(r));
+    let cands = S.filterWords(pool(), S.stateFromRows(r));
+    if (getSettings().hidePast) cands = cands.filter(w => !pastSet.has(w));
     const ranked = S.rankSuggestions(cands, new Set(lists.answers), lists.freq);
     const topScore = ranked.length ? scoreOf(ranked[0], cands) : 1;
     const top = ranked.slice(0, 30);

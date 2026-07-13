@@ -1,5 +1,5 @@
 const KEY = 'wosolve.settings.v1';
-const DEFAULTS = { skin: 'arcade', layout: 'column', theme: 'system', extended: false };
+const DEFAULTS = { skin: 'arcade', layout: 'column', theme: 'system', extended: false, hidePast: false };
 let settings = { ...DEFAULTS };
 
 export function getSettings() { return { ...settings }; }
@@ -32,6 +32,7 @@ function syncModal() {
     });
   });
   document.getElementById('set-extended').checked = settings.extended;
+  document.getElementById('set-hidepast').checked = settings.hidePast;
 }
 
 export function initSettings() {
@@ -45,4 +46,5 @@ export function initSettings() {
   document.querySelectorAll('#settings-modal .swatches button').forEach(b =>
     b.onclick = () => set(b.closest('.swatches').dataset.setting, b.dataset.value));
   document.getElementById('set-extended').onchange = e => set('extended', e.target.checked);
+  document.getElementById('set-hidepast').onchange = e => set('hidePast', e.target.checked);
 }
