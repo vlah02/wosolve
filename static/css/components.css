@@ -128,3 +128,9 @@ dialog::backdrop { background: rgba(0, 0, 0, .45); }
 .lay-drawer::after { content: ''; position: absolute; inset: 3px 12px 10px; background: var(--muted); border-radius: 2px; }
 .lay-drawer::before { content: ''; position: absolute; left: 8px; right: 8px; bottom: 2px; height: 5px; background: var(--accent); border-radius: 2px; }
 .set-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; }
+
+.stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.dist { display: flex; flex-direction: column; gap: 4px; }
+.drow { display: flex; align-items: center; gap: 8px; font-size: .75rem; font-weight: 700; }
+.drow .dbar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.drow .dbar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }

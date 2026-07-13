@@ -5,7 +5,7 @@ import { getSettings } from './settings.js';
 const KEY = 'wosolve.game.v1';
 let lists, state;
 
-const fresh = () => ({ mode: 'solver', solverRows: [],
+const fresh = () => ({ mode: 'solver', solverRows: [], solvedKey: '',
   practice: { secret: null, rows: [], done: false } });
 
 function load() {
@@ -112,7 +112,7 @@ function replay() {
 
 function onUndo() {
   if (state.mode !== 'solver' || !state.solverRows.length) return;
-  state.solverRows.pop(); UI.clearBanner(); lastSolvedKey = ''; save(); rerender();
+  state.solverRows.pop(); UI.clearBanner(); state.solvedKey = ''; save(); rerender();
 }
 
 function rerender(opts = {}) {
@@ -134,11 +134,11 @@ function rerender(opts = {}) {
   }
 }
 
-let lastSolvedKey = '';
 function solvedOnce(word) {
   const k = state.solverRows.map(r => r.word).join(',');
-  if (k === lastSolvedKey) return;
-  lastSolvedKey = k;
+  if (k === (state.solvedKey || '')) return;
+  state.solvedKey = k;
+  save();
   UI.showBanner(`It's ${word.toUpperCase()}!`, 'win');
   solved(state.solverRows.length);
 }
