@@ -25,8 +25,11 @@ function set(k, v) {
 
 function syncModal() {
   document.querySelectorAll('#settings-modal .swatches').forEach(g => {
-    g.querySelectorAll('button').forEach(b =>
-      b.classList.toggle('on', settings[g.dataset.setting] === b.dataset.value));
+    g.querySelectorAll('button').forEach(b => {
+      const on = settings[g.dataset.setting] === b.dataset.value;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
   });
   document.getElementById('set-extended').checked = settings.extended;
 }
