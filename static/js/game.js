@@ -237,7 +237,12 @@ function rerender(opts = {}) {
     if (cands.length === 1 && r.length && !r.some(x => x.marks === '+++++'))
       solvedOnce(cands[0]);
   } else {
-    UI.renderSuggestions({ top: [hintFor()], count: -1, scores: [100] });
+    if (state.practice.done) {
+      const sideTarget = document.getElementById('side-suggest');
+      if (sideTarget) sideTarget.hidden = true;
+    } else {
+      UI.renderSuggestions({ top: [hintFor()], count: -1, scores: [100] });
+    }
   }
 }
 

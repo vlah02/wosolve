@@ -128,6 +128,7 @@ html[data-skin="signal"][data-theme="dark"] .hero-word {
   display: flex; align-items: center; gap: 10px;
   background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-key);
   padding: 8px 14px; }
+#banner[hidden] { display: none; }
 @keyframes bannerpop { from { transform: scale(.96); opacity: .6; } }
 #banner.banner-pop { animation: bannerpop var(--dur-fast) var(--ease-pop); }
 #banner .banner-bar { width: 4px; align-self: stretch; flex: none; border-radius: 999px;
@@ -308,7 +309,7 @@ html[data-mode="solver"] #stats-content { display: none; }
   transition: opacity var(--dur-tile) ease; }
 .help-demo-live.fading { opacity: 0; }
 .help-demo-stage { position: relative; display: flex; flex-direction: column; align-items: center;
-  gap: 6px; padding: 6px 0 4px; width: 100%; }
+  gap: 6px; padding: 0px 0 4px; width: 100%; }
 .help-demo-stage .brow.mini { gap: 5px; }
 .help-demo-stage .tile { animation: helpdemopop var(--dur-tile) var(--ease-pop); }
 @keyframes helpdemopop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
