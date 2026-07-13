@@ -96,10 +96,13 @@ def test_generated_files_fresh():
     ROOT = pathlib.Path(PROJECT_ROOT)
     vectors_path = ROOT / "static/data/test-vectors.json"
     before = vectors_path.read_bytes()
-    subprocess.run([sys.executable, str(ROOT / "scripts/gen_test_vectors.py")], check=True)
-    after = vectors_path.read_bytes()
+    try:
+        subprocess.run([sys.executable, str(ROOT / "scripts/gen_test_vectors.py")], check=True)
+        after = vectors_path.read_bytes()
+    finally:
+        vectors_path.write_bytes(before)
     assert after == before, \
-        "vectors changed - solver_ref.py was modified; re-verify static/tests.html in a browser"
+        "vectors changed - solver_ref.py was modified; regenerate vectors and re-verify static/tests.html"
 
 named_tests = [
     ("test_feedback_duplicates", test_feedback_duplicates),
