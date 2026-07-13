@@ -11,6 +11,14 @@ export function initUI(callbacks) {
   window.addEventListener('keydown', onPhysicalKey);
   $('#help-btn').onclick = () => $('#help-modal').showModal();
   document.querySelectorAll('.close-modal').forEach(b => b.onclick = () => b.closest('dialog').close());
+  document.addEventListener('click', e => {
+    const undo = e.target.closest('.js-undo');
+    if (undo) { cb.onUndo(); return; }
+    const tog = e.target.closest('.js-toggle-list');
+    if (tog) { const l = tog.parentElement.querySelector('.word-list'); if (l) l.hidden = !l.hidden; return; }
+    const blur = e.target.closest('.js-unblur');
+    if (blur) blur.classList.remove('blurred');
+  });
 }
 
 function onPhysicalKey(e) {
@@ -95,30 +103,23 @@ export function renderSuggestions({ top, count, scores }) {
   const html = count === 0
     ? `<div class="panel"><h5>Solver</h5>
          <p style="margin:6px 0">No words match — check your colors.</p>
-         <button class="count-chip" id="undo-btn">Undo last guess</button></div>`
+         <button class="count-chip js-undo">Undo last guess</button></div>`
     : count === -1
     ? `<div class="panel">
          <h5>Hint</h5>
-         <div class="hero-word blurred">${top[0] ?? ''}</div>
+         <div class="hero-word blurred js-unblur">${top[0] ?? ''}</div>
        </div>`
     : `<div class="panel">
          <h5>Best next guess</h5>
          <div class="hero-word">${top[0] ?? ''}</div>
-         <button class="count-chip" id="toggle-list">${count} word${count === 1 ? '' : 's'} left · see all</button>
+         <button class="count-chip js-toggle-list">${count} word${count === 1 ? '' : 's'} left · see all</button>
          <div class="word-list" hidden>
            ${top.map((w, i) => `<div class="srow">${w}<span class="bar"><i style="width:${scores[i]}%"></i></span></div>`).join('')}
          </div>
        </div>`;
   $('#suggest-content').innerHTML = html;
-  const sideTarget = $('#side-suggest'), drawerBody = $('#drawer-body');
+  const sideTarget = $('#side-suggest');
   if (sideTarget) sideTarget.innerHTML = html;
-  const toggle = $('#suggest-content #toggle-list') || $('#side-suggest #toggle-list');
-  document.querySelectorAll('#toggle-list, #undo-btn').forEach(b => {
-    if (b.id === 'undo-btn') b.onclick = () => cb.onUndo();
-    else b.onclick = () => { const l = b.parentElement.querySelector('.word-list'); l.hidden = !l.hidden; };
-  });
-  document.querySelectorAll('.hero-word.blurred').forEach(el =>
-    el.addEventListener('click', () => el.classList.remove('blurred'), { once: true }));
   const evt = new CustomEvent('wosolve:suggestions', { detail: { html } });
   document.dispatchEvent(evt); // drawer listens (Task 8)
 }

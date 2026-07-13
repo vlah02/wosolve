@@ -4,16 +4,21 @@ let tab = 'words', lastSuggestHtml = '';
 export function initDrawer() {
   const drawer = $('#drawer');
   drawer.hidden = false; // visibility is controlled by layouts.css
-  $('#drawer-grip').onclick = cycleSnap;
-  let startY = null, startH = 0;
+  let startY = null, startH = 0, dragged = false;
   const grip = $('#drawer-grip');
+  grip.onclick = () => {
+    if (dragged) { dragged = false; return; }
+    cycleSnap();
+  };
   grip.addEventListener('pointerdown', e => {
     startY = e.clientY; startH = drawer.offsetHeight;
+    dragged = false;
     grip.setPointerCapture(e.pointerId);
     drawer.style.transition = 'none';
   });
   grip.addEventListener('pointermove', e => {
     if (startY === null) return;
+    if (Math.abs(startY - e.clientY) > 5) dragged = true;
     drawer.style.height = Math.max(92, Math.min(innerHeight * .82, startH + (startY - e.clientY))) + 'px';
   });
   grip.addEventListener('pointerup', () => {
@@ -40,6 +45,8 @@ export function initDrawer() {
   document.addEventListener('wosolve:stats-changed', () => {
     if (tab === 'stats') renderTab();
   });
+  lastSuggestHtml = $('#suggest-content').innerHTML;
+  if (tab === 'words') renderTab();
 }
 
 function cycleSnap() {
@@ -54,8 +61,4 @@ function renderTab() {
   if (tab === 'words') body.innerHTML = lastSuggestHtml;
   else if (tab === 'stats') body.innerHTML = $('#stats-content').innerHTML;
   else body.innerHTML = $('#help-modal').innerHTML.replace(/<button[^>]*close-modal[^>]*>.*?<\/button>/, '');
-  if (tab === 'words') {
-    const t = body.querySelector('#toggle-list');
-    if (t) t.onclick = () => { const l = body.querySelector('.word-list'); l.hidden = !l.hidden; };
-  }
 }
