@@ -226,9 +226,8 @@ function solvedOnce(word) {
     UI.showBanner(`It's ${word.toUpperCase()}!`, 'win', [{ label: 'See analysis', onAction: seeAnalysis }]);
 }
 
-// Analysis pool matches the solver's own filtering pool in both modes, so
-// the "solver would have tried" replay is consistent regardless of which
-// mode produced the finished game.
+// Analysis pool matches the solver's own filtering pool; the pastSet
+// (hide-past-answers) filter is only applied when in solver mode.
 function seeAnalysis() {
   const r = rows();
   if (!r.length) return;

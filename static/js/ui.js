@@ -66,7 +66,7 @@ function buildKeyboard() {
       b.className = 'key';
       b.dataset.key = ch;
       b.textContent = ch === '\n' ? '↵' : ch === '\b' ? '⌫' : ch.toUpperCase();
-      if (ch === '\n' || ch === '\b') b.style.minWidth = '52px';
+      if (ch === '\n' || ch === '\b') b.classList.add('wide');
       b.onclick = () => cb.onKey(ch);
       row.appendChild(b);
     }

@@ -45,3 +45,8 @@ html[data-layout="drawer"] #drawer.full { height: 82vh; }
   font-weight: 700; font-size: .72rem; padding: 5px 14px; border-radius: 999px; }
 #drawer-tabs button.on { background: var(--accent); color: #fff; }
 #drawer-body { padding: 0 14px 14px; overflow-y: auto; height: calc(100% - 70px); }
+
+/* ===== mobile / responsive pass (Task F5) ===== */
+@media (max-width: 480px) {
+  html[data-layout="drawer"] #drawer { width: 100vw; left: 0; transform: none; }
+}
