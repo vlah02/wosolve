@@ -296,27 +296,70 @@ html[data-mode="solver"] #stats-content { display: none; }
   background: var(--key-bg); opacity: .35; }
 .legend-shortcuts { font-size: .68rem; color: var(--muted); margin-top: -4px; }
 
-/* animated how-to-play demo (help modal) */
+/* animated how-to-play demo (help modal): two scripted per-mode loops
+   (helpdemo.js) built entirely from transform/opacity so they stay smooth at
+   60fps. Durations/easing pull from the --dur-*/--ease-pop tokens so pacing
+   follows the active skin and — via the global prefers-reduced-motion rule
+   in tokens.css — collapse toward 0ms; reduced motion additionally bypasses
+   the animated loop entirely (helpdemo.js) in favor of a static frame plus
+   the plain caption list below (.help-demo-static-captions). */
 .help-demo { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-.help-demo-stage { position: relative; display: flex; justify-content: center;
-  padding: 6px 0 20px; width: 100%; }
+.help-demo-live { display: flex; flex-direction: column; align-items: center; width: 100%;
+  transition: opacity var(--dur-tile) ease; }
+.help-demo-live.fading { opacity: 0; }
+.help-demo-stage { position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 6px 0 4px; width: 100%; }
 .help-demo-stage .brow.mini { gap: 5px; }
-.help-demo-stage .tile { animation: helpdemopop 220ms var(--ease-pop); }
+.help-demo-stage .tile { animation: helpdemopop var(--dur-tile) var(--ease-pop); }
 @keyframes helpdemopop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* practice: face-down secret tiles, pulsing subtly until typing starts */
+.help-demo-stage .tile.facedown { background: var(--tile-gray); opacity: .55; }
+.help-demo-stage .brow.pulsing .tile.facedown {
+  animation: hdpulse calc(var(--dur-tile) * 2.6) var(--ease-pop) infinite; }
+@keyframes hdpulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.05); opacity: .85; } }
+
+/* one-shot highlight pulse (practice: "green = right spot, yellow = wrong spot") */
+.tile.hd-flash { animation: hdflash calc(var(--dur-fast) * 2) var(--ease-pop); }
+@keyframes hdflash { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.22); } }
+
+/* celebratory row bounce (practice: second guess lands all green) */
+.brow.hd-celebrate { animation: hdcelebrate var(--dur-tile) var(--ease-pop); }
+@keyframes hdcelebrate { 0% { transform: scale(1); } 40% { transform: scale(1.08); }
+  70% { transform: scale(.97); } 100% { transform: scale(1); } }
+
+/* solver: pointer glides via transform (not left/top) so it stays compositor-only */
 .help-demo-pointer { position: absolute; left: 0; top: 0; width: 14px; height: 14px;
-  margin: -7px 0 0 -7px; border-radius: 50%; background: var(--accent); opacity: 0;
-  transition: left 380ms var(--ease-pop), top 380ms var(--ease-pop), opacity 160ms;
+  margin: -7px 0 0 -7px; opacity: 0; transform: translate(0, 0);
+  transition: transform var(--dur-tile) var(--ease-pop), opacity var(--dur-fast);
   pointer-events: none; }
 .help-demo-pointer.show { opacity: .9; }
-.help-demo-pointer.tap { animation: helpdemotap 260ms var(--ease-pop); }
+.help-demo-pointer-dot { display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--accent); }
+.help-demo-pointer.tap .help-demo-pointer-dot { animation: helpdemotap calc(var(--dur-fast) * 2) var(--ease-pop); }
 @keyframes helpdemotap { 0%, 100% { transform: scale(1); } 45% { transform: scale(.55); } }
+
 .help-demo-key { display: inline-flex; align-items: center; font-size: .68rem; font-weight: 700;
   padding: 4px 12px; border-radius: 999px; background: var(--line); color: var(--muted);
   opacity: 0; transform: scale(.85);
-  transition: opacity 160ms var(--ease-pop), transform 160ms var(--ease-pop), background 160ms, color 160ms; }
+  transition: opacity var(--dur-fast) var(--ease-pop), transform var(--dur-fast) var(--ease-pop),
+    background var(--dur-fast), color var(--dur-fast); }
 .help-demo-key.show { opacity: 1; transform: scale(1); }
 .help-demo-key.press { background: var(--accent); color: #fff; transform: scale(1.08); }
+
+/* solver: mini suggestion readout — count ticks down via rAF textContent
+   writes (cheap, no layout thrash); hero word fades in on transform/opacity */
+.help-demo-suggest { text-align: center; opacity: 0; transform: translateY(4px);
+  transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
+.help-demo-suggest.show { opacity: 1; transform: none; }
+.help-demo-count { display: block; font-size: .72rem; font-weight: 700; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.help-demo-hero { margin-top: 2px; font-size: 1.15rem; opacity: 0; transform: translateY(4px);
+  transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
+.help-demo-hero.show { opacity: 1; transform: none; }
+
 .help-demo-caption { margin: 8px 0 0; font-size: .78rem; color: var(--muted); text-align: center; min-height: 1.2em; }
+.help-demo-static-captions { margin: 10px 0 0; padding-left: 20px; font-size: .78rem; color: var(--muted); text-align: left; }
+.help-demo-static-captions li { margin-bottom: 4px; }
 
 /* ===== mobile / responsive pass (Task F5) ===== */
 @media (max-width: 480px) {

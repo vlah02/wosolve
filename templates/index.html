@@ -87,28 +87,18 @@
     <div class="dialog-body">
     <h3>How to play</h3>
     <div id="help-demo" class="help-demo">
-      <div class="help-demo-stage">
-        <div class="brow mini" id="help-demo-row">
-          <div class="tile empty"></div>
-          <div class="tile empty"></div>
-          <div class="tile empty"></div>
-          <div class="tile empty"></div>
-          <div class="tile empty"></div>
-        </div>
-        <span class="help-demo-pointer" aria-hidden="true"></span>
-      </div>
-      <span class="help-demo-key" aria-hidden="true">Enter &#8629;</span>
-      <p class="help-demo-caption">Type your guess</p>
+      <div class="help-demo-live"></div>
+      <ol class="help-demo-static-captions" hidden></ol>
     </div>
     <div class="help-copy">
-      <div class="dialog-group">
+      <div class="dialog-group" data-help-section="solver">
         <h5 class="section-label">Solver</h5>
         <p>Type a guess, then tap a tile — or press <b>1</b>/<b>2</b>/<b>3</b> — to cycle its
           color to match what Wordle showed you.</p>
         <p>Arrow keys move between tiles; <b>Enter</b> submits and narrows the word list.
           The &times; on a row undoes that guess.</p>
       </div>
-      <div class="dialog-group">
+      <div class="dialog-group" data-help-section="practice">
         <h5 class="section-label">Practice</h5>
         <p>The app picks a secret word — six tries, colors fill in automatically.</p>
         <p>Stuck? Try <b>Hint</b>, or play a specific day's puzzle from the calendar.</p>
