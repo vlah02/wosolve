@@ -167,11 +167,14 @@ export function renderSuggestions({ top, count, scores }) {
   document.dispatchEvent(evt); // drawer listens (Task 8)
 }
 
-export function showBanner(text, kind, actionLabel, onAction) {
+export function showBanner(text, kind, actions = []) {
   const b = $('#banner');
   b.hidden = false; b.className = kind;
-  b.innerHTML = text + (actionLabel ? ` <button id="banner-act">${actionLabel}</button>` : '');
-  if (actionLabel) $('#banner-act').onclick = onAction;
+  b.innerHTML = text + actions.map((_, i) => ` <button class="banner-act" data-i="${i}"></button>`).join('');
+  b.querySelectorAll('.banner-act').forEach((btn, i) => {
+    btn.textContent = actions[i].label;
+    btn.onclick = actions[i].onAction;
+  });
 }
 export function clearBanner() { const b = $('#banner'); b.hidden = true; b.innerHTML = ''; }
 

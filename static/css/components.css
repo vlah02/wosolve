@@ -189,3 +189,16 @@ html[data-mode="solver"] #drawer-tabs [data-tab="stats"] { display: none; }
 html[data-mode="solver"] #stats-btn { display: none; }
 
 .hero-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+
+/* post-solve analysis */
+.brow.mini .tile { width: 28px; height: 28px; font-size: 13px; border-width: 2px; }
+#analysis-modal { max-width: 460px; }
+.analysis-summary { margin-bottom: 14px; }
+.analysis-summary h3 { margin: 0 0 4px; font-size: 1.05rem; font-family: var(--font-display); }
+.analysis-sub { margin: 0; font-size: .78rem; font-weight: 700; color: var(--muted); }
+.analysis-list { display: flex; flex-direction: column; gap: 14px;
+  max-height: 55vh; overflow-y: auto; padding-right: 2px; }
+.analysis-guess { display: flex; flex-direction: column; gap: 5px; }
+.analysis-line { font-size: .78rem; font-weight: 700; }
+.analysis-pick { font-size: .74rem; color: var(--muted); }
+.analysis-match { background: var(--tile-green); color: var(--tile-ink); }

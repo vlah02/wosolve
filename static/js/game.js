@@ -1,6 +1,7 @@
 import * as S from './solver.js';
 import * as UI from './ui.js';
 import { getSettings } from './settings.js';
+import { analyzeGame, showAnalysis } from './analysis.js';
 
 const KEY = 'wosolve.game.v1';
 let lists, state;
@@ -164,11 +165,13 @@ function submit() {
     if (marks === '+++++') {
       state.practice.done = true;
       solved(state.practice.rows.length);
-      UI.showBanner(`You got it in ${state.practice.rows.length}!`, 'win', 'Play again', replay);
+      UI.showBanner(`You got it in ${state.practice.rows.length}!`, 'win',
+        [{ label: 'Play again', onAction: replay }, { label: 'See analysis', onAction: seeAnalysis }]);
     } else if (state.practice.rows.length >= 6) {
       state.practice.done = true;
       document.dispatchEvent(new CustomEvent('wosolve:lost'));
-      UI.showBanner(`The word was ${state.practice.secret.toUpperCase()}`, 'lose', 'Play again', replay);
+      UI.showBanner(`The word was ${state.practice.secret.toUpperCase()}`, 'lose',
+        [{ label: 'Play again', onAction: replay }, { label: 'See analysis', onAction: seeAnalysis }]);
     }
   }
   entry = { letters: '', marks: '' };
@@ -219,7 +222,20 @@ function rerender(opts = {}) {
 }
 
 function solvedOnce(word) {
-  if (trySolve(state.solverRows.length)) UI.showBanner(`It's ${word.toUpperCase()}!`, 'win');
+  if (trySolve(state.solverRows.length))
+    UI.showBanner(`It's ${word.toUpperCase()}!`, 'win', [{ label: 'See analysis', onAction: seeAnalysis }]);
+}
+
+// Analysis pool matches the solver's own filtering pool in both modes, so
+// the "solver would have tried" replay is consistent regardless of which
+// mode produced the finished game.
+function seeAnalysis() {
+  const r = rows();
+  if (!r.length) return;
+  const won = state.mode === 'practice' ? r[r.length - 1].marks === '+++++' : true;
+  showAnalysis(analyzeGame({
+    rows: r, pool: pool(), answerSet: new Set(lists.answers), freq: lists.freq, won,
+  }));
 }
 
 // Guards both the process-of-elimination path (solvedOnce, narrowed to 1 candidate
