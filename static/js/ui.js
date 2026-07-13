@@ -14,6 +14,8 @@ export function initUI(callbacks) {
   document.querySelectorAll('dialog').forEach(d =>
     d.addEventListener('click', e => { if (e.target === d) d.close(); }));
   document.addEventListener('click', e => {
+    const rem = e.target.closest('.js-remove-row');
+    if (rem) { cb.onRemoveRow(Number(rem.dataset.row)); return; }
     const undo = e.target.closest('.js-undo');
     if (undo) { cb.onUndo(); return; }
     const tog = e.target.closest('.js-toggle-list');
@@ -84,7 +86,8 @@ const MARK_CLASS = { '+': 'g', '*': 'y', '-': 'n' };
 export function renderRows(rows, entry, opts = {}) {
   const board = $('#board');
   board.innerHTML = '';
-  for (const r of rows) board.appendChild(rowEl(r.word, r.marks, opts.animateLast && r === rows[rows.length - 1]));
+  rows.forEach((r, i) => board.appendChild(rowEl(r.word, r.marks,
+    opts.animateLast && r === rows[rows.length - 1], false, opts.removable ? i : null)));
   if (entry) {
     const len = entry.letters.length;
     if (len !== lastEntryLen) {
@@ -106,7 +109,7 @@ export function renderRows(rows, entry, opts = {}) {
   }
 }
 
-function rowEl(word, marks, committed, isEntry = false) {
+function rowEl(word, marks, committed, isEntry = false, removeIdx = null) {
   const row = document.createElement('div');
   row.className = 'brow' + (committed ? ' committed' : '');
   for (let i = 0; i < 5; i++) {
@@ -121,6 +124,10 @@ function rowEl(word, marks, committed, isEntry = false) {
     }
     t.dataset.idx = i;
     row.appendChild(t);
+  }
+  if (removeIdx !== null) {
+    row.insertAdjacentHTML('beforeend',
+      `<button class="row-remove js-remove-row" data-row="${removeIdx}" title="Remove this guess" aria-label="Remove guess ${word.toUpperCase()}">×</button>`);
   }
   return row;
 }

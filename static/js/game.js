@@ -22,7 +22,7 @@ export function initGame(wordLists, initUI_) {
   lists = wordLists;
   state = load();
   if (state.mode === 'practice' && !state.practice.secret) newPracticeGame();
-  initUI_({ onKey, onCycle, onMark, onUndo });
+  initUI_({ onKey, onCycle, onMark, onUndo, onRemoveRow });
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.onclick = () => switchMode(b.dataset.mode));
   document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
@@ -135,10 +135,19 @@ function onUndo() {
   state.solverRows.pop(); UI.clearBanner(); state.solvedKey = ''; save(); rerender();
 }
 
+function onRemoveRow(i) {
+  if (state.mode !== 'solver') return;
+  if (i < 0 || i >= state.solverRows.length) return;
+  state.solverRows.splice(i, 1);
+  state.solvedKey = '';
+  UI.clearBanner();
+  save(); rerender();
+}
+
 function rerender(opts = {}) {
   const r = rows();
   const showEntry = state.mode === 'solver' || (!state.practice.done && r.length < 6);
-  UI.renderRows(r, showEntry ? entry : null, opts);
+  UI.renderRows(r, showEntry ? entry : null, { ...opts, removable: state.mode === 'solver' });
   UI.renderKeyboard(r); // both modes: derived from committed rows
   if (state.mode === 'solver') {
     const cands = S.filterWords(pool(), S.stateFromRows(r));
