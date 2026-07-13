@@ -203,7 +203,9 @@ export function showBanner(text, kind, actions = []) {
   b.classList.remove('banner-pop');
   void b.offsetWidth; // restart animation
   b.classList.add('banner-pop');
-  b.innerHTML = text + actions.map((_, i) => ` <button class="banner-act"></button>`).join('');
+  b.innerHTML = '<span class="banner-bar" aria-hidden="true"></span>' +
+    `<span class="banner-text">${text}</span>` +
+    actions.map(() => `<button class="banner-act count-chip"></button>`).join('');
   b.querySelectorAll('.banner-act').forEach((btn, i) => {
     btn.textContent = actions[i].label;
     btn.onclick = actions[i].onAction;

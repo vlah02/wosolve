@@ -124,16 +124,22 @@ html[data-skin="signal"][data-theme="dark"] .hero-word {
 .word-list .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
 .list-caption { font-size: .68rem; color: var(--muted); margin-top: 8px; }
 
-#banner { width: fit-content; min-width: 280px; max-width: min(340px, 92vw); margin: 0 auto;
-  text-align: center; padding: 10px 14px; border-radius: var(--radius-panel); font-weight: 700; }
+#banner { width: fit-content; max-width: min(420px, 92vw); margin: 0 auto;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-key);
+  padding: 8px 14px; }
 @keyframes bannerpop { from { transform: scale(.96); opacity: .6; } }
 #banner.banner-pop { animation: bannerpop var(--dur-fast) var(--ease-pop); }
-#banner.win { background: var(--tile-green); color: var(--tile-ink); }
-#banner.lose { background: var(--tile-gray); color: var(--tile-ink); }
-#banner.warn { background: var(--tile-yellow); color: var(--tile-ink); }
-#banner.info { background: var(--line); color: var(--ink); }
-#banner button { margin-left: 10px; border: none; border-radius: 999px; padding: 3px 12px;
-  font-weight: 700; background: var(--bg-raised); color: var(--ink); }
+#banner .banner-bar { width: 4px; align-self: stretch; flex: none; border-radius: 999px;
+  background: var(--line); }
+#banner.win .banner-bar { background: var(--tile-green); }
+#banner.lose .banner-bar { background: var(--tile-gray); }
+#banner.warn .banner-bar { background: var(--tile-yellow); }
+#banner.info .banner-bar { background: var(--line); }
+#banner .banner-text { flex: 1; text-align: left; color: var(--ink); font-size: .9rem; font-weight: 600; }
+#banner .banner-act { flex: none; margin-top: 0; background: transparent; color: var(--accent);
+  border: 1px solid var(--accent); transition: background var(--dur-fast), color var(--dur-fast); }
+#banner .banner-act:hover { background: var(--accent); color: #fff; }
 
 dialog { border: 1px solid var(--line); border-radius: var(--radius-panel);
   background: var(--bg-modal); color: var(--ink); padding: 0; width: min(92vw, 440px); }
@@ -171,8 +177,17 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 .sw-board { background: linear-gradient(90deg, #fff 50%, #121213 50%); border: 1px solid #999; }
 .sw-signal { background: radial-gradient(circle at 20% 0%, #2c3a2e, #101216); }
 .sw-arcade { background: linear-gradient(90deg, #58cc7a 33%, #ffc94d 33% 66%, #fdf8ef 66%); }
-.set-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin-bottom: 8px; }
-.set-check input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+.set-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin-bottom: 8px; cursor: pointer; }
+.set-check input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.checkbox-box { width: 18px; height: 18px; flex: none; position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--muted); border-radius: calc(var(--radius-key) * .6); background: var(--bg-raised);
+  transition: background var(--dur-fast), border-color var(--dur-fast); }
+.set-check input:checked + .checkbox-box { background: var(--accent); border-color: var(--accent); }
+.set-check input:checked + .checkbox-box::after { content: ''; width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.set-check input:focus-visible + .checkbox-box { outline: 2px solid var(--accent); outline-offset: 2px; }
 .set-sub { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
 
 /* help modal body copy: lighter, airier than bold paragraph blocks */
@@ -190,6 +205,7 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 #practice-controls button { min-height: 40px; }
 #practice-controls input[type="date"]:disabled,
 #practice-controls button:disabled { opacity: .45; cursor: not-allowed; }
+.practice-refresh-note { margin: 4px 0 0; font-size: .72rem; color: var(--muted); }
 
 /* left-panel lists: past answers (solver) + recently played (practice) */
 #panel-left .section-label { margin-bottom: 8px; }

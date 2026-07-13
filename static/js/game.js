@@ -48,17 +48,12 @@ export function initGame(wordLists, initUI_) {
   recentPlayed = loadRecent();
   state = load();
   if (state.mode === 'practice') {
-    const p = state.practice;
-    // A fresh page load resumes a game in progress (including a dated game
-    // with zero guesses yet), but a finished game or a genuinely empty board
-    // with no dated game pending gets a brand-new random word.
-    const boardEmpty = p.rows.length === 0 && !p.dateLabel;
-    if (!p.secret || p.done || boardEmpty) {
-      newPracticeGame();
-      maybeShowPracticeIntro();
-    } else if (p.dateLabel && !p.done) {
-      UI.showBanner('Wordle from ' + p.dateLabel + ' — guess it in 6!', 'info');
-    }
+    // Every page load starts a brand-new random practice game — even mid-game
+    // (dated games included; refreshing abandons whatever was in progress).
+    // The persisted practice board is only ever read back when switching
+    // modes within the same session (see switchMode/replay below).
+    newPracticeGame();
+    UI.showBanner('New word picked — guess it in 6!', 'info');
   }
   document.documentElement.dataset.mode = state.mode;
   document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode: state.mode } }));
