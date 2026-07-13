@@ -84,6 +84,7 @@ html[data-skin="signal"] .panel { backdrop-filter: blur(8px); }
 html[data-skin="signal"][data-theme="dark"] .hero-word {
   background: linear-gradient(90deg, #a5d99f, #e4d489);
   -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-word.blurred { filter: blur(10px); cursor: pointer; }
 .count-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
   background: var(--line); color: var(--muted); border: none;
   border-radius: 999px; padding: 4px 12px; font-size: .72rem; font-weight: 700; }

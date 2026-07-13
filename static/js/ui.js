@@ -96,6 +96,11 @@ export function renderSuggestions({ top, count, scores }) {
     ? `<div class="panel"><h5>Solver</h5>
          <p style="margin:6px 0">No words match — check your colors.</p>
          <button class="count-chip" id="undo-btn">Undo last guess</button></div>`
+    : count === -1
+    ? `<div class="panel">
+         <h5>Hint</h5>
+         <div class="hero-word blurred">${top[0] ?? ''}</div>
+       </div>`
     : `<div class="panel">
          <h5>Best next guess</h5>
          <div class="hero-word">${top[0] ?? ''}</div>
@@ -112,6 +117,8 @@ export function renderSuggestions({ top, count, scores }) {
     if (b.id === 'undo-btn') b.onclick = () => cb.onUndo();
     else b.onclick = () => { const l = b.parentElement.querySelector('.word-list'); l.hidden = !l.hidden; };
   });
+  document.querySelectorAll('.hero-word.blurred').forEach(el =>
+    el.addEventListener('click', () => el.classList.remove('blurred'), { once: true }));
   const evt = new CustomEvent('wosolve:suggestions', { detail: { html } });
   document.dispatchEvent(evt); // drawer listens (Task 8)
 }
