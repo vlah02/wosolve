@@ -22,6 +22,8 @@ export function initGame(wordLists, initUI_) {
   lists = wordLists;
   state = load();
   if (state.mode === 'practice' && !state.practice.secret) newPracticeGame();
+  document.documentElement.dataset.mode = state.mode;
+  document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode: state.mode } }));
   initUI_({ onKey, onCycle, onMark, onUndo, onRemoveRow });
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.onclick = () => switchMode(b.dataset.mode));
@@ -49,6 +51,8 @@ function switchMode(mode) {
   if (mode === 'practice' && (!state.practice.secret || state.practice.done)) newPracticeGame();
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === mode));
+  document.documentElement.dataset.mode = mode;
+  document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode } }));
   UI.clearBanner();
   maybeShowPracticeIntro();
   save(); rerender();
@@ -82,9 +86,11 @@ function onKey(k) {
 }
 
 const CYCLE = { '-': '*', '*': '+', '+': '-' };
-function onCycle(i) {
+const CYCLE_BACK = { '-': '+', '+': '*', '*': '-' };
+function onCycle(i, back = false) {
   if (state.mode !== 'solver' || !entry.marks[i]) return;
-  entry.marks = entry.marks.slice(0, i) + CYCLE[entry.marks[i]] + entry.marks.slice(i + 1);
+  const map = back ? CYCLE_BACK : CYCLE;
+  entry.marks = entry.marks.slice(0, i) + map[entry.marks[i]] + entry.marks.slice(i + 1);
   rerender();
 }
 function onMark(i, mark) {

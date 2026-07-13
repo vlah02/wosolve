@@ -45,6 +45,14 @@ export function initDrawer() {
   document.addEventListener('wosolve:stats-changed', () => {
     if (tab === 'stats') renderTab();
   });
+  document.addEventListener('wosolve:mode-changed', e => {
+    if (e.detail.mode === 'solver' && tab === 'stats') {
+      tab = 'words';
+      document.querySelectorAll('#drawer-tabs button').forEach(x =>
+        x.classList.toggle('on', x.dataset.tab === 'words'));
+      renderTab();
+    }
+  });
   lastSuggestHtml = $('#suggest-content').innerHTML;
   if (tab === 'words') renderTab();
 }

@@ -51,6 +51,8 @@ function onPhysicalKey(e) {
     if (focusedTile >= 0 && focusedTile < 4) setFocus(focusedTile + 1);
     else if (focusedTile === -1 && lastEntryLen > 0) setFocus(0);
   }
+  else if (k === 'arrowup' && focusedTile >= 0) { e.preventDefault(); cb.onCycle(focusedTile); }
+  else if (k === 'arrowdown' && focusedTile >= 0) { e.preventDefault(); cb.onCycle(focusedTile, true); }
 }
 
 function buildKeyboard() {
