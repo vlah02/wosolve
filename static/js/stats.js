@@ -8,7 +8,7 @@ function load() {
   catch {}
   return structuredClone(FRESH);
 }
-const save = () => localStorage.setItem(KEY, JSON.stringify(stats));
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(stats)); } catch {} };
 
 export function initStats() {
   stats = load();

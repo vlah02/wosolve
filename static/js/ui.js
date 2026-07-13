@@ -2,7 +2,7 @@ import { keyboardHints } from './solver.js';
 
 const $ = s => document.querySelector(s);
 const KEY_ROWS = ['qwertyuiop', 'asdfghjkl', '\nzxcvbnm\b'];
-let cb = {}, focusedTile = -1;
+let cb = {}, focusedTile = -1, lastEntryLen = 0;
 
 export function initUI(callbacks) {
   cb = callbacks;
@@ -27,9 +27,15 @@ function onPhysicalKey(e) {
   if (/^[a-z]$/.test(k)) { e.preventDefault(); cb.onKey(k); }
   else if (k === 'backspace') { e.preventDefault(); cb.onKey('\b'); }
   else if (k === 'enter') { e.preventDefault(); cb.onKey('\n'); }
-  else if ('123'.includes(k) && focusedTile >= 0) { e.preventDefault(); cb.onMark(focusedTile, '+*-'[Number(k) - 1] === '+' ? '+' : '+*-'['123'.indexOf(k)]); }
-  else if (k === 'arrowleft' && focusedTile > 0) setFocus(focusedTile - 1);
-  else if (k === 'arrowright' && focusedTile >= 0 && focusedTile < 4) setFocus(focusedTile + 1);
+  else if ('123'.includes(k) && focusedTile >= 0) { e.preventDefault(); cb.onMark(focusedTile, '+*-'['123'.indexOf(k)]); }
+  else if (k === 'arrowleft') {
+    if (focusedTile > 0) setFocus(focusedTile - 1);
+    else if (focusedTile === -1 && lastEntryLen > 0) setFocus(lastEntryLen - 1);
+  }
+  else if (k === 'arrowright') {
+    if (focusedTile >= 0 && focusedTile < 4) setFocus(focusedTile + 1);
+    else if (focusedTile === -1 && lastEntryLen > 0) setFocus(0);
+  }
 }
 
 function buildKeyboard() {
@@ -65,12 +71,25 @@ const MARK_CLASS = { '+': 'g', '*': 'y', '-': 'n' };
 export function renderRows(rows, entry, opts = {}) {
   const board = $('#board');
   board.innerHTML = '';
-  focusedTile = -1;
   for (const r of rows) board.appendChild(rowEl(r.word, r.marks, opts.animateLast && r === rows[rows.length - 1]));
   if (entry) {
+    const len = entry.letters.length;
+    if (len !== lastEntryLen) {
+      focusedTile = len > 0 ? len - 1 : -1;
+      lastEntryLen = len;
+    } else if (focusedTile >= len) {
+      focusedTile = len > 0 ? len - 1 : -1;
+    }
     const row = rowEl(entry.letters.padEnd(5, ' '), entry.marks.padEnd(5, ' '), false, true);
     board.appendChild(row);
     if (opts.shake) { row.classList.add('shake'); setTimeout(() => row.classList.remove('shake'), 450); }
+    if (focusedTile >= 0) {
+      row.querySelectorAll('.tile').forEach(t =>
+        t.classList.toggle('focused', Number(t.dataset.idx) === focusedTile));
+    }
+  } else {
+    focusedTile = -1;
+    lastEntryLen = 0;
   }
 }
 

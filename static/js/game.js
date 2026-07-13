@@ -24,6 +24,7 @@ export function initGame(wordLists, initUI_) {
   initUI_({ onKey, onCycle, onMark, onUndo });
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.onclick = () => switchMode(b.dataset.mode));
+  document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
   document.addEventListener('wosolve:settings-changed', e => { if (e.detail.key === 'extended') rerender(); });
   rerender();
 }
@@ -52,6 +53,7 @@ function newPracticeGame() {
 
 function onKey(k) {
   if (state.mode === 'practice' && state.practice.done) return;
+  if (state.mode === 'practice') UI.clearBanner();
   if (k === '\b') {
     entry.letters = entry.letters.slice(0, -1);
     entry.marks = entry.marks.slice(0, -1);
@@ -79,9 +81,10 @@ function submit() {
   if (entry.letters.length !== 5) return;
   if (state.mode === 'solver') {
     state.solverRows.push({ word: entry.letters, marks: entry.marks });
-    if (entry.marks === '+++++') solved(state.solverRows.length);
+    if (entry.marks === '+++++') trySolve(state.solverRows.length);
   } else {
     if (!pool().includes(entry.letters)) {
+      UI.showBanner('Not in the word list', 'warn');
       rerender({ shake: true });
       return;
     }
@@ -135,12 +138,23 @@ function rerender(opts = {}) {
 }
 
 function solvedOnce(word) {
+  if (trySolve(state.solverRows.length)) UI.showBanner(`It's ${word.toUpperCase()}!`, 'win');
+}
+
+// Guards both the process-of-elimination path (solvedOnce, narrowed to 1 candidate
+// with no all-green row yet) and the direct all-green submit path against firing
+// wosolve:solved twice for the same puzzle: the key is the joined word list of
+// state.solverRows (including whatever row was just pushed), and firing is skipped
+// whenever that key is an extension of (or equal to) the previously recorded key —
+// i.e. the puzzle was already marked solved earlier in this same row sequence.
+function trySolve(guesses) {
   const k = state.solverRows.map(r => r.word).join(',');
-  if (k === (state.solvedKey || '')) return;
+  const prev = state.solvedKey || '';
+  if (prev && (k === prev || k.startsWith(prev + ','))) return false;
   state.solvedKey = k;
   save();
-  UI.showBanner(`It's ${word.toUpperCase()}!`, 'win');
-  solved(state.solverRows.length);
+  solved(guesses);
+  return true;
 }
 
 function scoreOf(w, cands) {
