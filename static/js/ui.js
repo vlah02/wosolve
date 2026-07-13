@@ -170,7 +170,7 @@ export function renderSuggestions({ top, count, scores }) {
 export function showBanner(text, kind, actions = []) {
   const b = $('#banner');
   b.hidden = false; b.className = kind;
-  b.innerHTML = text + actions.map((_, i) => ` <button class="banner-act" data-i="${i}"></button>`).join('');
+  b.innerHTML = text + actions.map((_, i) => ` <button class="banner-act"></button>`).join('');
   b.querySelectorAll('.banner-act').forEach((btn, i) => {
     btn.textContent = actions[i].label;
     btn.onclick = actions[i].onAction;

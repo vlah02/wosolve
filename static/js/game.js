@@ -233,8 +233,10 @@ function seeAnalysis() {
   const r = rows();
   if (!r.length) return;
   const won = state.mode === 'practice' ? r[r.length - 1].marks === '+++++' : true;
+  let p = pool();
+  if (getSettings().hidePast) p = p.filter(w => !pastSet.has(w));
   showAnalysis(analyzeGame({
-    rows: r, pool: pool(), answerSet: new Set(lists.answers), freq: lists.freq, won,
+    rows: r, pool: p, answerSet: new Set(lists.answers), freq: lists.freq, won,
   }));
 }
 
