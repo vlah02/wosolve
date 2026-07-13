@@ -13,7 +13,7 @@ function load() {
   catch {}
   return fresh();
 }
-const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
 let entry = { letters: '', marks: '' };
 
@@ -34,12 +34,9 @@ function rows() { return state.mode === 'solver' ? state.solverRows : state.prac
 
 function switchMode(mode) {
   if (mode === state.mode) return;
-  const inProgress = rows().length > 0 || entry.letters;
-  if (inProgress && !confirm(`Switch to ${mode}? The current board resets.`)) return;
   state.mode = mode;
   entry = { letters: '', marks: '' };
-  if (mode === 'practice') newPracticeGame();
-  else state.solverRows = [];
+  if (mode === 'practice' && (!state.practice.secret || state.practice.done)) newPracticeGame();
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === mode));
   UI.clearBanner();
@@ -114,14 +111,14 @@ function replay() {
 
 function onUndo() {
   if (state.mode !== 'solver' || !state.solverRows.length) return;
-  state.solverRows.pop(); UI.clearBanner(); save(); rerender();
+  state.solverRows.pop(); UI.clearBanner(); lastSolvedKey = ''; save(); rerender();
 }
 
 function rerender(opts = {}) {
   const r = rows();
   const showEntry = state.mode === 'solver' || (!state.practice.done && r.length < 6);
   UI.renderRows(r, showEntry ? entry : null, opts);
-  UI.renderKeyboard(state.mode === 'solver' ? r : r); // both modes: derived from committed rows
+  UI.renderKeyboard(r); // both modes: derived from committed rows
   if (state.mode === 'solver') {
     const cands = S.filterWords(pool(), S.stateFromRows(r));
     const ranked = S.rankSuggestions(cands, new Set(lists.answers));
