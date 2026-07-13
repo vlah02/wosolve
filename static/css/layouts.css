@@ -1,11 +1,18 @@
 #layout-root { max-width: 1000px; margin: 0 auto; padding: 0 16px 30px;
-  display: grid; gap: 10px; }
+  display: grid; gap: 10px; flex: 1; align-content: safe center;
+  animation: rise var(--dur-tile) var(--ease-pop) backwards; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
 /* column (default): single centered flow */
 html[data-layout="column"] #layout-root { grid-template-columns: minmax(0, 480px);
   justify-content: center; }
 html[data-layout="column"] #side-panel,
 html[data-layout="column"] #drawer { display: none; }
+html[data-layout="column"] #board-zone { order: 1; }
+html[data-layout="column"] #keyboard-zone { order: 2; }
+html[data-layout="column"] #suggest-slot { order: 3;
+  width: fit-content; min-width: 340px; max-width: 100%; margin: 0 auto; }
+html[data-layout="column"] #suggest-content .panel { text-align: center; }
 
 /* panes: board+keyboard left, persistent panel right */
 html[data-layout="panes"] #layout-root { grid-template-columns: minmax(0, 1fr) 300px;
@@ -26,7 +33,7 @@ html[data-layout="panes"] #drawer { display: none; }
 
 /* drawer: column + bottom sheet */
 html[data-layout="drawer"] #layout-root { grid-template-columns: minmax(0, 480px);
-  justify-content: center; padding-bottom: 120px; }
+  justify-content: center; padding-bottom: 120px; align-content: start; }
 html[data-layout="drawer"] #suggest-slot { display: none; }
 html[data-layout="drawer"] #side-panel { display: none; }
 html[data-layout="drawer"] #drawer { display: block; position: fixed; left: 50%;
