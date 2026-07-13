@@ -1,7 +1,6 @@
 import { initUI, animateLogo } from './ui.js';
 import { initSettings } from './settings.js';
 import { initGame } from './game.js';
-import { initDrawer } from './drawer.js';
 import { initStats } from './stats.js';
 import { initCelebrate } from './celebrate.js';
 import { initHelpDemo } from './helpdemo.js';
@@ -32,14 +31,8 @@ async function boot() {
       '<div class="panel">Could not load word lists. <button class="count-chip" onclick="location.reload()">Retry</button></div>';
     return;
   }
-  const through = document.getElementById('hidepast-through');
-  if (through) {
-    through.hidden = !lists.pastAnswers;
-    through.textContent = lists.pastAnswers ? `through ${lists.pastAnswers.meta.through}` : '';
-  }
   initGame(lists, initUI);
   initStats();
-  initDrawer();
   initCelebrate();
   initHelpDemo();
   animateLogo();

@@ -146,11 +146,11 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 /* shared dialog language: title with tile bullet + unified section labels,
    scoped to the three redesigned dialogs (stats/help/settings) so the
    already-custom analysis-modal heading is left untouched. */
-#stats-modal h3, #help-modal h3, #settings-modal h3 {
+#help-modal h3, #settings-modal h3 {
   font-family: var(--font-display); font-size: 1.05rem; font-weight: 800;
   letter-spacing: .01em; margin: 0 0 16px; display: flex; align-items: center; gap: 8px;
 }
-#stats-modal h3::before, #help-modal h3::before, #settings-modal h3::before {
+#help-modal h3::before, #settings-modal h3::before {
   content: ''; width: 12px; height: 12px; border-radius: 3px; background: var(--tile-green);
   flex: none;
 }
@@ -171,12 +171,6 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 .sw-board { background: linear-gradient(90deg, #fff 50%, #121213 50%); border: 1px solid #999; }
 .sw-signal { background: radial-gradient(circle at 20% 0%, #2c3a2e, #101216); }
 .sw-arcade { background: linear-gradient(90deg, #58cc7a 33%, #ffc94d 33% 66%, #fdf8ef 66%); }
-.lay { width: 40px; height: 24px; border-radius: 4px; border: 1px solid var(--muted); display: block; position: relative; }
-.lay-column::after { content: ''; position: absolute; inset: 3px 12px; background: var(--muted); border-radius: 2px; }
-.lay-panes::after { content: ''; position: absolute; inset: 3px 14px 3px 3px; background: var(--muted); border-radius: 2px; }
-.lay-panes::before { content: ''; position: absolute; inset: 3px 3px 3px 26px; background: var(--muted); border-radius: 2px; }
-.lay-drawer::after { content: ''; position: absolute; inset: 3px 12px 10px; background: var(--muted); border-radius: 2px; }
-.lay-drawer::before { content: ''; position: absolute; left: 8px; right: 8px; bottom: 2px; height: 5px; background: var(--accent); border-radius: 2px; }
 .set-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin-bottom: 8px; }
 .set-check input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
 .set-sub { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
@@ -186,11 +180,9 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 .help-copy p:last-child { margin-bottom: 0; }
 .help-copy p b { color: var(--ink); font-weight: 700; }
 
-/* practice by-date controls: shown only in practice mode */
-#practice-controls { display: none; }
-html[data-mode="practice"] #practice-controls {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-}
+/* practice by-date controls: live inside #play-day (panel-left), which is
+   itself shown/hidden per mode in layouts.css */
+#practice-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
 #practice-controls input[type="date"] {
   border: 1px solid var(--line); border-radius: var(--radius-key); background: var(--bg-raised);
   color: var(--ink); font: inherit; padding: 4px 10px; min-height: 40px;
@@ -199,20 +191,33 @@ html[data-mode="practice"] #practice-controls {
 #practice-controls input[type="date"]:disabled,
 #practice-controls button:disabled { opacity: .45; cursor: not-allowed; }
 
+/* left-panel lists: past answers (solver) + recently played (practice) */
+#panel-left .section-label { margin-bottom: 8px; }
+#panel-left .recent-label { margin-top: 16px; }
+.scroll-list { display: flex; flex-direction: column; gap: 2px; max-height: 60vh; overflow-y: auto; }
+.past-row { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 5px 6px; font-size: .78rem; border-radius: calc(var(--radius-key) * .6); }
+.past-row .past-date { color: var(--muted); font-variant-numeric: tabular-nums; }
+.past-row .past-word { color: var(--ink); font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.recent-row .recent-mark { font-weight: 800; }
+.recent-row.won .recent-mark { color: var(--tile-edge-green, var(--accent)); }
+.recent-row.lost .recent-mark { color: var(--muted); }
+.muted-note { font-size: .78rem; color: var(--muted); margin: 0; }
+
 .stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .dist { display: flex; flex-direction: column; gap: 4px; }
 .drow { display: flex; align-items: center; gap: 8px; font-size: .75rem; font-weight: 700; }
 .drow .dbar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
 .drow .dbar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
 
-/* #stats-content is reused verbatim by the panes side-panel and the drawer's
-   Stats tab; panel chrome is applied contextually so the dialog (which builds
-   its own richer layout in stats.js) never gets a panel nested in a panel. */
+/* #stats-content is rendered directly into the practice-mode right panel
+   (#panel-right); panel chrome is applied contextually here. */
 .stats-body h5 { margin: 0 0 10px; font-size: .72rem; letter-spacing: .1em;
   text-transform: uppercase; color: var(--muted); font-weight: 700; }
-#side-panel .stats-body { background: var(--bg-raised); border: 1px solid var(--line);
+#panel-right .stats-body { background: var(--bg-raised); border: 1px solid var(--line);
   border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); padding: 12px 18px; }
-html[data-skin="signal"] #side-panel .stats-body { backdrop-filter: blur(8px); }
+html[data-skin="signal"] #panel-right .stats-body { backdrop-filter: blur(8px); }
 
 /* stats dialog: redesigned layout built directly in stats.js (not a clone
    of #stats-content) — title, 4-cell stat row, distribution, footnote. */
@@ -245,8 +250,6 @@ html { scrollbar-color: var(--tile-gray) transparent; scrollbar-width: thin; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
 html[data-mode="solver"] #stats-content { display: none; }
-html[data-mode="solver"] #drawer-tabs [data-tab="stats"] { display: none; }
-html[data-mode="solver"] #stats-btn { visibility: hidden; }
 
 .hero-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }
 
@@ -310,7 +313,6 @@ html[data-mode="solver"] #stats-btn { visibility: hidden; }
   #top-actions button { width: 40px; height: 40px; }
   #mode-toggle button { padding: 9px 16px; }
   .count-chip { min-height: 36px; align-items: center; }
-  #drawer-tabs button { padding: 9px 16px; }
 
   #board { gap: 4px; }
   .brow { gap: 4px; }

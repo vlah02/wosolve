@@ -165,11 +165,36 @@ export function renderSuggestions({ top, count, scores }) {
            ${top.map((w, i) => `<div class="srow">${w}<span class="bar" title="How much this guess narrows the remaining words"><i style="width:${scores[i]}%"></i></span></div>`).join('')}
          </div>
        </div>`;
-  $('#suggest-content').innerHTML = html;
   const sideTarget = $('#side-suggest');
   if (sideTarget) sideTarget.innerHTML = html;
   const evt = new CustomEvent('wosolve:suggestions', { detail: { html } });
-  document.dispatchEvent(evt); // drawer listens (Task 8)
+  document.dispatchEvent(evt);
+}
+
+// Past-answers panel (solver-mode left panel): newest first, capped at the
+// most recent 400 rows to keep DOM weight down (full history is ~1850 rows;
+// the list is a browsing aid, not an archive).
+const PAST_LIST_CAP = 400;
+export function renderPastAnswers(byDate) {
+  const list = $('#past-list');
+  if (!list || !byDate) return;
+  const dates = Object.keys(byDate).sort().reverse().slice(0, PAST_LIST_CAP);
+  list.innerHTML = dates.map(d =>
+    `<div class="past-row"><span class="past-date">${d}</span><span class="past-word">${byDate[d].toUpperCase()}</span></div>`
+  ).join('');
+}
+
+// Recently-played list (practice-mode left panel), newest first.
+export function renderRecentlyPlayed(entries) {
+  const list = $('#recent-list');
+  if (!list) return;
+  if (!entries.length) {
+    list.innerHTML = '<p class="muted-note">No dated games played yet.</p>';
+    return;
+  }
+  list.innerHTML = entries.map(e =>
+    `<div class="past-row recent-row ${e.won ? 'won' : 'lost'}"><span class="past-date">${e.date}</span><span class="recent-mark">${e.won ? '✓' : '✕'}</span></div>`
+  ).join('');
 }
 
 export function showBanner(text, kind, actions = []) {

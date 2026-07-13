@@ -4,8 +4,11 @@ import { getSettings } from './settings.js';
 import { analyzeGame, showAnalysis } from './analysis.js';
 
 const KEY = 'wosolve.game.v1';
+const RECENT_KEY = 'wosolve.recent.v1';
+const RECENT_CAP = 10;
 let lists, state;
-let pastSet = new Set(), byDate = {}, pastMeta = null;
+let byDate = {}, pastMeta = null;
+let recentPlayed = [];
 
 const fresh = () => ({ mode: 'solver', solverRows: [], solvedKey: '',
   practice: { secret: null, rows: [], done: false, dateLabel: null } });
@@ -17,6 +20,22 @@ function load() {
 }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
+function loadRecent() {
+  try { const r = JSON.parse(localStorage.getItem(RECENT_KEY)); if (Array.isArray(r)) return r; }
+  catch {}
+  return [];
+}
+const saveRecent = () => { try { localStorage.setItem(RECENT_KEY, JSON.stringify(recentPlayed)); } catch {} };
+
+// Appends a finished dated game to the "recently played" list (newest first,
+// capped). Called only for DATED practice games (random games aren't tracked
+// here — there's no calendar identity to show).
+function recordRecent(date, won) {
+  recentPlayed = [{ date, won }, ...recentPlayed].slice(0, RECENT_CAP);
+  saveRecent();
+  UI.renderRecentlyPlayed(recentPlayed);
+}
+
 let entry = { letters: '', marks: '' };
 let practiceTileInfoShown = false; // one-time-per-session nudge
 
@@ -25,12 +44,21 @@ export function initGame(wordLists, initUI_) {
   if (wordLists.pastAnswers) {
     byDate = wordLists.pastAnswers.byDate;
     pastMeta = wordLists.pastAnswers.meta;
-    pastSet = new Set(Object.values(byDate));
   }
+  recentPlayed = loadRecent();
   state = load();
-  if (state.mode === 'practice' && !state.practice.secret) newPracticeGame();
-  if (state.mode === 'practice' && state.practice.dateLabel && !state.practice.done) {
-    UI.showBanner('Wordle from ' + state.practice.dateLabel + ' — guess it in 6!', 'info');
+  if (state.mode === 'practice') {
+    const p = state.practice;
+    // A fresh page load resumes a game in progress (including a dated game
+    // with zero guesses yet), but a finished game or a genuinely empty board
+    // with no dated game pending gets a brand-new random word.
+    const boardEmpty = p.rows.length === 0 && !p.dateLabel;
+    if (!p.secret || p.done || boardEmpty) {
+      newPracticeGame();
+      maybeShowPracticeIntro();
+    } else if (p.dateLabel && !p.done) {
+      UI.showBanner('Wordle from ' + p.dateLabel + ' — guess it in 6!', 'info');
+    }
   }
   document.documentElement.dataset.mode = state.mode;
   document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode: state.mode } }));
@@ -39,9 +67,11 @@ export function initGame(wordLists, initUI_) {
     b.onclick = () => switchMode(b.dataset.mode));
   document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
   document.addEventListener('wosolve:settings-changed', e => {
-    if (e.detail.key === 'extended' || e.detail.key === 'hidePast') rerender();
+    if (e.detail.key === 'extended') rerender();
   });
   initPracticeControls();
+  UI.renderPastAnswers(byDate);
+  UI.renderRecentlyPlayed(recentPlayed);
   const board = document.getElementById('board');
   if (board) board.addEventListener('click', e => {
     if (state.mode !== 'practice' || practiceTileInfoShown) return;
@@ -49,7 +79,7 @@ export function initGame(wordLists, initUI_) {
     practiceTileInfoShown = true;
     UI.showBanner('Colors are automatic in practice mode', 'info');
   });
-  rerender();
+  save(); rerender();
 }
 
 function pool() {
@@ -87,8 +117,7 @@ function newPracticeGame() {
 function initPracticeControls() {
   const dateInput = document.getElementById('practice-date');
   const dateBtn = document.getElementById('practice-date-btn');
-  const randomBtn = document.getElementById('practice-random-btn');
-  if (!dateInput || !dateBtn || !randomBtn) return;
+  if (!dateInput || !dateBtn) return;
   if (pastMeta) {
     dateInput.max = pastMeta.through;
   } else {
@@ -96,7 +125,6 @@ function initPracticeControls() {
     dateBtn.disabled = true;
   }
   dateBtn.onclick = () => onPlayDate(dateInput.value);
-  randomBtn.onclick = () => onPlayRandom();
 }
 
 function onPlayDate(dateStr) {
@@ -109,15 +137,6 @@ function onPlayDate(dateStr) {
   state.practice = { secret: word, rows: [], done: false, dateLabel: dateStr };
   entry = { letters: '', marks: '' };
   UI.showBanner(`Wordle from ${dateStr} — guess it in 6!`, 'info');
-  save(); rerender();
-  UI.animateBoardReset();
-}
-
-function onPlayRandom() {
-  newPracticeGame();
-  entry = { letters: '', marks: '' };
-  UI.clearBanner();
-  maybeShowPracticeIntro();
   save(); rerender();
   UI.animateBoardReset();
 }
@@ -169,11 +188,13 @@ function submit() {
     if (marks === '+++++') {
       state.practice.done = true;
       solved(state.practice.rows.length);
+      if (state.practice.dateLabel) recordRecent(state.practice.dateLabel, true);
       UI.showBanner(`You got it in ${state.practice.rows.length}!`, 'win',
         [{ label: 'Play again', onAction: replay }, { label: 'See analysis', onAction: seeAnalysis }]);
     } else if (state.practice.rows.length >= 6) {
       state.practice.done = true;
       document.dispatchEvent(new CustomEvent('wosolve:lost'));
+      if (state.practice.dateLabel) recordRecent(state.practice.dateLabel, false);
       UI.showBanner(`The word was ${state.practice.secret.toUpperCase()}`, 'lose',
         [{ label: 'Play again', onAction: replay }, { label: 'See analysis', onAction: seeAnalysis }]);
     }
@@ -212,8 +233,7 @@ function rerender(opts = {}) {
     { ...opts, removable: state.mode === 'solver', fixedRows: state.mode === 'practice' ? 6 : null });
   UI.renderKeyboard(r); // both modes: derived from committed rows
   if (state.mode === 'solver') {
-    let cands = S.filterWords(pool(), S.stateFromRows(r));
-    if (getSettings().hidePast) cands = cands.filter(w => !pastSet.has(w));
+    const cands = S.filterWords(pool(), S.stateFromRows(r));
     const ranked = S.rankSuggestions(cands, new Set(lists.answers), lists.freq);
     const topScore = ranked.length ? scoreOf(ranked[0], cands) : 1;
     const top = ranked.slice(0, 30);
@@ -231,14 +251,12 @@ function solvedOnce(word) {
     UI.showBanner(`It's ${word.toUpperCase()}!`, 'win', [{ label: 'See analysis', onAction: seeAnalysis }]);
 }
 
-// Analysis pool matches the solver's own filtering pool; the pastSet
-// (hide-past-answers) filter is only applied when in solver mode.
+// Analysis pool matches the solver's own filtering pool.
 function seeAnalysis() {
   const r = rows();
   if (!r.length) return;
   const won = state.mode === 'practice' ? r[r.length - 1].marks === '+++++' : true;
-  let p = pool();
-  if (state.mode === 'solver' && getSettings().hidePast) p = p.filter(w => !pastSet.has(w));
+  const p = pool();
   showAnalysis(analyzeGame({
     rows: r, pool: p, answerSet: new Set(lists.answers), freq: lists.freq, won,
   }));

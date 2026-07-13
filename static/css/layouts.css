@@ -1,59 +1,33 @@
-#layout-root { max-width: 1000px; margin: 0 auto; padding: 0 16px 30px;
-  display: grid; gap: 10px; flex: 1; align-content: safe center;
+/* Single fixed three-column command-center layout: left panel / center
+   play-area (board+keyboard) / right panel. No more layout switching —
+   only the panel *content* changes with mode (solver vs practice), via the
+   html[data-mode] rules below. */
+#layout-root { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px;
+  display: grid; grid-template-columns: 280px minmax(0, 1fr) 300px; gap: 24px;
+  align-items: start; flex: 1;
   animation: rise var(--dur-tile) var(--ease-pop) backwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
-/* column (default): single centered flow */
-html[data-layout="column"] #layout-root { grid-template-columns: minmax(0, 480px);
-  justify-content: center; }
-html[data-layout="column"] #side-panel,
-html[data-layout="column"] #drawer { display: none; }
-html[data-layout="column"] #board-zone { order: 1; }
-html[data-layout="column"] #keyboard-zone { order: 2; }
-html[data-layout="column"] #suggest-slot { order: 3;
-  width: fit-content; min-width: 340px; max-width: 100%; margin: 0 auto; }
-html[data-layout="column"] #suggest-content .panel { text-align: center; }
+#panel-left { display: flex; flex-direction: column; gap: 14px; }
+#panel-right { display: flex; flex-direction: column; gap: 14px; }
 
-/* panes: board+keyboard left, persistent panel right */
-html[data-layout="panes"] #layout-root { grid-template-columns: minmax(0, 1fr) 300px;
-  grid-template-areas: "board side" "suggest side" "keys side"; align-items: start; }
-html[data-layout="panes"] #board-zone { grid-area: board; }
-html[data-layout="panes"] #suggest-slot { display: none; }
-html[data-layout="panes"] #keyboard-zone { grid-area: keys; }
-html[data-layout="panes"] #side-panel { grid-area: side; display: flex;
-  flex-direction: column; gap: 10px; }
-html[data-layout="panes"] #drawer { display: none; }
-@media (max-width: 900px) {
-  html[data-layout="panes"] #layout-root { grid-template-columns: minmax(0, 480px);
-    grid-template-areas: none; justify-content: center; }
-  html[data-layout="panes"] #board-zone, html[data-layout="panes"] #keyboard-zone { grid-area: auto; }
-  html[data-layout="panes"] #side-panel { display: none; }
-  html[data-layout="panes"] #suggest-slot { display: block; }
-}
+#center-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 
-/* drawer: column + bottom sheet */
-html[data-layout="drawer"] #layout-root { grid-template-columns: minmax(0, 480px);
-  justify-content: center; padding-bottom: 120px; align-content: start; }
-html[data-layout="drawer"] #suggest-slot { display: none; }
-html[data-layout="drawer"] #side-panel { display: none; }
-html[data-layout="drawer"] #drawer { display: block; position: fixed; left: 50%;
-  transform: translateX(-50%); bottom: 0; width: min(560px, 100vw);
-  background: var(--bg-raised); border: 1px solid var(--line); border-bottom: none;
-  border-radius: var(--radius-panel) var(--radius-panel) 0 0; box-shadow: var(--shadow-panel);
-  height: 92px; overflow: hidden; transition: height 300ms var(--ease-pop); z-index: 30; }
-html[data-skin="signal"][data-layout="drawer"] #drawer { backdrop-filter: blur(10px); }
-html[data-layout="drawer"] #drawer.half { height: 45vh; }
-html[data-layout="drawer"] #drawer.full { height: 82vh; }
-#drawer-grip { width: 40px; height: 5px; border-radius: 99px; background: var(--muted);
-  margin: 8px auto; cursor: grab; }
-#drawer-grip { touch-action: none; }
-#drawer-tabs { display: flex; gap: 6px; justify-content: center; padding-bottom: 8px; }
-#drawer-tabs button { border: none; background: var(--line); color: var(--muted);
-  font-weight: 700; font-size: .72rem; padding: 5px 14px; border-radius: 999px; }
-#drawer-tabs button.on { background: var(--accent); color: #fff; }
-#drawer-body { padding: 0 14px 14px; overflow-y: auto; height: calc(100% - 70px); }
+/* mode-dependent panel content: left panel swaps between the solver's past-
+   answers browser and practice's play-a-day + recently-played controls. The
+   right panel (suggestions/hint + stats) needs no mode toggle — #side-suggest
+   already renders different content per mode, and #stats-content hides
+   itself in solver mode (components.css). */
+html[data-mode="solver"] #play-day { display: none; }
+html[data-mode="practice"] #past-panel { display: none; }
 
-/* ===== mobile / responsive pass (Task F5) ===== */
-@media (max-width: 480px) {
-  html[data-layout="drawer"] #drawer { width: 100vw; left: 0; transform: none; }
+/* below ~980px: stack single-column, center column first, then right panel,
+   then left panel, everything centered */
+@media (max-width: 980px) {
+  #layout-root { grid-template-columns: minmax(0, 480px); justify-items: center;
+    justify-content: center; }
+  #panel-left, #panel-right, #center-col { width: 100%; max-width: 480px; }
+  #center-col { order: 1; }
+  #panel-right { order: 2; }
+  #panel-left { order: 3; }
 }

@@ -1,5 +1,5 @@
 const KEY = 'wosolve.settings.v1';
-const DEFAULTS = { skin: 'arcade', layout: 'column', theme: 'system', extended: false, hidePast: false };
+const DEFAULTS = { skin: 'arcade', theme: 'system', extended: false };
 let settings = { ...DEFAULTS };
 
 export function getSettings() { return { ...settings }; }
@@ -12,7 +12,6 @@ function resolvedTheme() {
 function apply() {
   const h = document.documentElement;
   h.dataset.skin = settings.skin;
-  h.dataset.layout = settings.layout;
   h.dataset.theme = resolvedTheme();
 }
 
@@ -32,12 +31,17 @@ function syncModal() {
     });
   });
   document.getElementById('set-extended').checked = settings.extended;
-  document.getElementById('set-hidepast').checked = settings.hidePast;
 }
 
+// Merge only known keys from storage so stale settings from older builds
+// (e.g. a removed 'layout' or 'hidePast' key) are dropped rather than
+// resurrected into the live settings object.
 export function initSettings() {
-  try { settings = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
-  catch { settings = { ...DEFAULTS }; }
+  settings = { ...DEFAULTS };
+  try {
+    const stored = JSON.parse(localStorage.getItem(KEY) || '{}');
+    for (const k of Object.keys(DEFAULTS)) if (k in stored) settings[k] = stored[k];
+  } catch {}
   apply();
   media.addEventListener('change', apply);
   document.getElementById('settings-btn').onclick = () => {
@@ -46,5 +50,4 @@ export function initSettings() {
   document.querySelectorAll('#settings-modal .swatches button').forEach(b =>
     b.onclick = () => set(b.closest('.swatches').dataset.setting, b.dataset.value));
   document.getElementById('set-extended').onchange = e => set('extended', e.target.checked);
-  document.getElementById('set-hidepast').onchange = e => set('hidePast', e.target.checked);
 }
