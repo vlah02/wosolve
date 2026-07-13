@@ -27,6 +27,12 @@ async function boot() {
   initCelebrate();
   animateLogo();
 
+  setInterval(() => {
+    if (document.hidden) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    animateLogo();
+  }, 90000);
+
   // 15-click dog easter egg (preserved)
   let clicks = 0;
   const gif = document.getElementById('movingGif');
