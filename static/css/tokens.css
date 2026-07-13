@@ -68,5 +68,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root { --dur-fast: 0ms; --dur-tile: 0ms; }
+  :root { --dur-fast: 0ms !important; --dur-tile: 0ms !important; }
 }
