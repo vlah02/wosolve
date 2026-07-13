@@ -29,11 +29,15 @@ export function initStats() {
   render();
 }
 
+// Unwrapped content for #stats-content: this element is reused verbatim by the
+// panes side-panel and the drawer's "Stats" tab. Panel chrome (background/border)
+// is applied contextually in CSS (#side-panel .stats-body) rather than baked in
+// here, so it doesn't double up when the drawer/dialog already frame it.
 function render() {
   const p = stats.practice;
   const max = Math.max(1, ...p.dist);
   document.getElementById('stats-content').innerHTML = `
-    <div class="panel"><h5>Stats</h5>
+    <div class="stats-body"><h5>Stats</h5>
       <div class="stat-chips">
         <span class="count-chip">played ${p.played}</span>
         <span class="count-chip">win ${p.played ? Math.round(p.won / p.played * 100) : 0}%</span>
@@ -47,6 +51,29 @@ function render() {
   document.dispatchEvent(new CustomEvent('wosolve:stats-changed'));
 }
 
+// The dialog gets its own richer layout (stat grid + divider + labeled
+// distribution) rather than cloning #stats-content, so it never nests a
+// panel-in-a-panel inside the already-panel-styled <dialog>.
+function modalHtml() {
+  const p = stats.practice;
+  const max = Math.max(1, ...p.dist);
+  const winPct = p.played ? Math.round(p.won / p.played * 100) : 0;
+  return `
+    <h3>Statistics</h3>
+    <div class="stat-grid">
+      <div class="stat-cell"><b>${p.played}</b><span>Played</span></div>
+      <div class="stat-cell"><b>${winPct}%</b><span>Win %</span></div>
+      <div class="stat-cell"><b>${p.streak}</b><span>Streak</span></div>
+      <div class="stat-cell"><b>${p.best}</b><span>Best</span></div>
+    </div>
+    <div class="stat-divider"></div>
+    <h5 class="section-label">Guess distribution</h5>
+    <div class="dist dist-modal">${p.dist.map((n, i) =>
+      `<div class="drow"><span>${i + 1}</span><span class="dbar"><i style="width:${n / max * 100}%"></i></span><b>${n}</b></div>`).join('')}
+    </div>
+    <p class="stats-footnote">Solver puzzles cracked: ${stats.solver.solved}</p>`;
+}
+
 function openModal() {
   let d = document.getElementById('stats-modal');
   if (!d) {
@@ -54,7 +81,7 @@ function openModal() {
     document.body.appendChild(d);
     d.addEventListener('click', e => { if (e.target === d) d.close(); });
   }
-  d.innerHTML = '<div class="dialog-body">' + document.getElementById('stats-content').innerHTML +
+  d.innerHTML = '<div class="dialog-body">' + modalHtml() +
     '<button class="close-modal">Close</button></div>';
   d.querySelector('.close-modal').onclick = () => d.close();
   d.showModal();

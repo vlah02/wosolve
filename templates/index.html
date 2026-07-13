@@ -93,6 +93,34 @@
   <dialog id="help-modal">
     <div class="dialog-body">
     <h3>How to play</h3>
+    <div id="help-demo" class="help-demo">
+      <div class="help-demo-stage">
+        <div class="brow mini" id="help-demo-row">
+          <div class="tile empty"></div>
+          <div class="tile empty"></div>
+          <div class="tile empty"></div>
+          <div class="tile empty"></div>
+          <div class="tile empty"></div>
+        </div>
+        <span class="help-demo-pointer" aria-hidden="true"></span>
+      </div>
+      <span class="help-demo-key" aria-hidden="true">Enter &#8629;</span>
+      <p class="help-demo-caption">Type your guess</p>
+    </div>
+    <div class="help-copy">
+      <div class="dialog-group">
+        <h5 class="section-label">Solver</h5>
+        <p>Type a guess, then tap a tile — or press <b>1</b>/<b>2</b>/<b>3</b> — to cycle its
+          color to match what Wordle showed you.</p>
+        <p>Arrow keys move between tiles; <b>Enter</b> submits and narrows the word list.
+          The &times; on a row undoes that guess.</p>
+      </div>
+      <div class="dialog-group">
+        <h5 class="section-label">Practice</h5>
+        <p>The app picks a secret word — six tries, colors fill in automatically.</p>
+        <p>Stuck? Try <b>Hint</b>, or play a specific day's puzzle from the calendar.</p>
+      </div>
+    </div>
     <div class="legend">
       <div class="legend-row"><span class="legend-sample g"></span>Letter is in that exact spot</div>
       <div class="legend-row"><span class="legend-sample y"></span>In the word, different spot</div>
@@ -101,13 +129,6 @@
       <div class="legend-row"><span class="legend-key"></span>Letter ruled out</div>
       <p class="legend-shortcuts">Enter submit &middot; Backspace delete &middot; Esc close</p>
     </div>
-    <p><b>Solver:</b> type your Wordle guess, then tap each tile to cycle its color
-      (gray → yellow → green) to match what Wordle showed you. Press Enter — the word list
-      narrows and the best next guess appears. Keys 1/2/3 set colors; ←/→ pick a tile,
-      ↑/↓ cycle its color.</p>
-    <p><b>Practice:</b> the app picks a secret word; guess it in six tries. Colors are applied
-      automatically — green = right letter right spot, yellow = right letter wrong spot.
-      Use the Hint card if you're stuck.</p>
     <button class="close-modal">Close</button>
     </div>
   </dialog>

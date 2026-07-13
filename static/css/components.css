@@ -143,12 +143,30 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 .moving-gif { position: fixed; width: 100px; height: 100px; pointer-events: none;
   z-index: 40; display: none; }
 
-.set-group { margin-bottom: 16px; }
+/* shared dialog language: title with tile bullet + unified section labels,
+   scoped to the three redesigned dialogs (stats/help/settings) so the
+   already-custom analysis-modal heading is left untouched. */
+#stats-modal h3, #help-modal h3, #settings-modal h3 {
+  font-family: var(--font-display); font-size: 1.05rem; font-weight: 800;
+  letter-spacing: .01em; margin: 0 0 16px; display: flex; align-items: center; gap: 8px;
+}
+#stats-modal h3::before, #help-modal h3::before, #settings-modal h3::before {
+  content: ''; width: 12px; height: 12px; border-radius: 3px; background: var(--tile-green);
+  flex: none;
+}
+.set-group h5, .section-label {
+  margin: 0 0 10px; font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); font-weight: 700;
+}
+.dialog-group { margin-bottom: 20px; }
+.dialog-group:last-child { margin-bottom: 0; }
+
+.set-group { margin-bottom: 20px; }
 .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
 .swatches button { display: flex; flex-direction: column; align-items: center; gap: 6px;
-  border: 2px solid var(--line); background: var(--bg); color: var(--ink);
-  border-radius: var(--radius-key); padding: 8px 12px; font-size: .72rem; font-weight: 700; }
-.swatches button.on { border-color: var(--accent); }
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: var(--radius-key); padding: 9px 13px; font-size: .72rem; font-weight: 700; }
+.swatches button.on { border: 2px solid var(--accent); padding: 8px 12px; }
 .sw { width: 40px; height: 24px; border-radius: 5px; display: block; }
 .sw-board { background: linear-gradient(90deg, #fff 50%, #121213 50%); border: 1px solid #999; }
 .sw-signal { background: radial-gradient(circle at 20% 0%, #2c3a2e, #101216); }
@@ -161,7 +179,12 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 .lay-drawer::before { content: ''; position: absolute; left: 8px; right: 8px; bottom: 2px; height: 5px; background: var(--accent); border-radius: 2px; }
 .set-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin-bottom: 8px; }
 .set-check input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
-.set-sub { display: block; font-size: .68rem; color: var(--muted); font-weight: 400; }
+.set-sub { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
+
+/* help modal body copy: lighter, airier than bold paragraph blocks */
+.help-copy p { margin: 0 0 10px; font-size: .88rem; line-height: 1.65; color: var(--muted); }
+.help-copy p:last-child { margin-bottom: 0; }
+.help-copy p b { color: var(--ink); font-weight: 700; }
 
 /* practice by-date controls: shown only in practice mode */
 #practice-controls { display: none; }
@@ -181,6 +204,26 @@ html[data-mode="practice"] #practice-controls {
 .drow { display: flex; align-items: center; gap: 8px; font-size: .75rem; font-weight: 700; }
 .drow .dbar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
 .drow .dbar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+
+/* #stats-content is reused verbatim by the panes side-panel and the drawer's
+   Stats tab; panel chrome is applied contextually so the dialog (which builds
+   its own richer layout in stats.js) never gets a panel nested in a panel. */
+.stats-body h5 { margin: 0 0 10px; font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); font-weight: 700; }
+#side-panel .stats-body { background: var(--bg-raised); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); padding: 12px 18px; }
+html[data-skin="signal"] #side-panel .stats-body { backdrop-filter: blur(8px); }
+
+/* stats dialog: redesigned layout built directly in stats.js (not a clone
+   of #stats-content) — title, 4-cell stat row, distribution, footnote. */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-bottom: 20px; text-align: center; }
+.stat-cell { display: flex; flex-direction: column; gap: 4px; }
+.stat-cell b { font: 800 1.3rem var(--font-display); font-variant-numeric: tabular-nums; }
+.stat-cell span { font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.stat-divider { height: 1px; background: var(--line); margin: 0 0 20px; }
+.dist-modal .dbar { height: 18px; }
+.stats-footnote { margin: 20px 0 0; font-size: .78rem; color: var(--muted); }
 
 @keyframes glowpulse { 0% { box-shadow: 0 0 0 rgba(106, 170, 100, 0); }
   40% { box-shadow: 0 0 60px rgba(106, 170, 100, .55); }
@@ -222,17 +265,39 @@ html[data-mode="solver"] #stats-btn { visibility: hidden; }
 
 /* help modal color legend */
 .legend { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.legend-row { display: flex; align-items: center; gap: 10px; font-size: .78rem; }
-.legend-sample { width: 26px; height: 26px; flex: none; border-radius: var(--radius-tile);
+.legend-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); }
+.legend-sample { width: 22px; height: 22px; flex: none; border-radius: var(--radius-tile);
   border-bottom: 3px solid transparent; color: var(--tile-ink); }
 .legend-sample.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
 .legend-sample.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
 .legend-sample.n { background: var(--tile-gray); border-bottom-color: var(--tile-edge-gray); }
 .legend-sample.selected { background: transparent; border: 2px solid var(--tile-empty-border);
   outline: 2px solid var(--ink); outline-offset: 2px; }
-.legend-key { width: 26px; height: 26px; flex: none; border-radius: var(--radius-key);
+.legend-key { width: 22px; height: 22px; flex: none; border-radius: var(--radius-key);
   background: var(--key-bg); opacity: .35; }
 .legend-shortcuts { font-size: .68rem; color: var(--muted); margin-top: -4px; }
+
+/* animated how-to-play demo (help modal) */
+.help-demo { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+.help-demo-stage { position: relative; display: flex; justify-content: center;
+  padding: 6px 0 20px; width: 100%; }
+.help-demo-stage .brow.mini { gap: 5px; }
+.help-demo-stage .tile { animation: helpdemopop 220ms var(--ease-pop); }
+@keyframes helpdemopop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.help-demo-pointer { position: absolute; left: 0; top: 0; width: 14px; height: 14px;
+  margin: -7px 0 0 -7px; border-radius: 50%; background: var(--accent); opacity: 0;
+  transition: left 380ms var(--ease-pop), top 380ms var(--ease-pop), opacity 160ms;
+  pointer-events: none; }
+.help-demo-pointer.show { opacity: .9; }
+.help-demo-pointer.tap { animation: helpdemotap 260ms var(--ease-pop); }
+@keyframes helpdemotap { 0%, 100% { transform: scale(1); } 45% { transform: scale(.55); } }
+.help-demo-key { display: inline-flex; align-items: center; font-size: .68rem; font-weight: 700;
+  padding: 4px 12px; border-radius: 999px; background: var(--line); color: var(--muted);
+  opacity: 0; transform: scale(.85);
+  transition: opacity 160ms var(--ease-pop), transform 160ms var(--ease-pop), background 160ms, color 160ms; }
+.help-demo-key.show { opacity: 1; transform: scale(1); }
+.help-demo-key.press { background: var(--accent); color: #fff; transform: scale(1.08); }
+.help-demo-caption { margin: 8px 0 0; font-size: .78rem; color: var(--muted); text-align: center; min-height: 1.2em; }
 
 /* ===== mobile / responsive pass (Task F5) ===== */
 @media (max-width: 480px) {

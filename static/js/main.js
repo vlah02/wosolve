@@ -4,6 +4,7 @@ import { initGame } from './game.js';
 import { initDrawer } from './drawer.js';
 import { initStats } from './stats.js';
 import { initCelebrate } from './celebrate.js';
+import { initHelpDemo } from './helpdemo.js';
 
 async function fetchLists() {
   const [a, e] = await Promise.all([
@@ -40,6 +41,7 @@ async function boot() {
   initStats();
   initDrawer();
   initCelebrate();
+  initHelpDemo();
   animateLogo();
 
   setInterval(() => {
