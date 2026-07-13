@@ -24,6 +24,7 @@ export function initGame(wordLists, initUI_) {
   initUI_({ onKey, onCycle, onMark, onUndo });
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.onclick = () => switchMode(b.dataset.mode));
+  document.addEventListener('wosolve:settings-changed', e => { if (e.detail.key === 'extended') rerender(); });
   rerender();
 }
 

@@ -40,7 +40,31 @@
       </div>
     </main>
   </div>
-  <dialog id="settings-modal"></dialog>
+  <dialog id="settings-modal">
+    <h3>Settings</h3>
+    <div class="set-group"><h5>Skin</h5>
+      <div class="swatches" data-setting="skin">
+        <button data-value="board"><span class="sw sw-board"></span>Board</button>
+        <button data-value="signal"><span class="sw sw-signal"></span>Signal</button>
+        <button data-value="arcade"><span class="sw sw-arcade"></span>Arcade</button>
+      </div></div>
+    <div class="set-group"><h5>Layout</h5>
+      <div class="swatches" data-setting="layout">
+        <button data-value="column"><span class="lay lay-column"></span>Game first</button>
+        <button data-value="panes"><span class="lay lay-panes"></span>Command center</button>
+        <button data-value="drawer"><span class="lay lay-drawer"></span>Drawer</button>
+      </div></div>
+    <div class="set-group"><h5>Theme</h5>
+      <div class="swatches" data-setting="theme">
+        <button data-value="light">Light</button>
+        <button data-value="dark">Dark</button>
+        <button data-value="system">System</button>
+      </div></div>
+    <div class="set-group"><h5>Words</h5>
+      <label class="set-check"><input type="checkbox" id="set-extended"> Include extended word list</label>
+    </div>
+    <button class="close-modal">Done</button>
+  </dialog>
   <dialog id="help-modal">
     <h3>How to play</h3>
     <p><b>Solver:</b> type your Wordle guess, then tap each tile to cycle its color
