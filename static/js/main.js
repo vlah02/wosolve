@@ -1,6 +1,7 @@
 import { initUI, animateLogo } from './ui.js';
 import { initSettings } from './settings.js';
 import { initGame } from './game.js';
+import { initDrawer } from './drawer.js';
 
 async function fetchLists() {
   const [a, e] = await Promise.all([
@@ -19,6 +20,7 @@ async function boot() {
     return;
   }
   initGame(lists, initUI);
+  initDrawer();
   animateLogo();
 
   // 15-click dog easter egg (preserved)
