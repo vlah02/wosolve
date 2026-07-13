@@ -40,9 +40,9 @@ function onPhysicalKey(e) {
   }
   if (e.target.closest('dialog')) return;
   const k = e.key.toLowerCase();
-  if (/^[a-z]$/.test(k)) { e.preventDefault(); cb.onKey(k); }
-  else if (k === 'backspace') { e.preventDefault(); cb.onKey('\b'); }
-  else if (k === 'enter') { e.preventDefault(); cb.onKey('\n'); }
+  if (/^[a-z]$/.test(k)) { e.preventDefault(); cb.onKey(k); flashKey(k); }
+  else if (k === 'backspace') { e.preventDefault(); cb.onKey('\b'); flashKey('\b'); }
+  else if (k === 'enter') { e.preventDefault(); cb.onKey('\n'); flashKey('\n'); }
   else if ('123'.includes(k) && focusedTile >= 0) { e.preventDefault(); cb.onMark(focusedTile, '+*-'['123'.indexOf(k)]); }
   else if (k === 'arrowleft') {
     if (focusedTile > 0) setFocus(focusedTile - 1);
@@ -68,11 +68,23 @@ function buildKeyboard() {
       b.dataset.key = ch;
       b.textContent = ch === '\n' ? '↵' : ch === '\b' ? '⌫' : ch.toUpperCase();
       if (ch === '\n' || ch === '\b') b.classList.add('wide');
-      b.onclick = () => { cb.onKey(ch); b.blur(); };
+      b.onclick = () => { cb.onKey(ch); flashKey(ch); b.blur(); };
       row.appendChild(b);
     }
     kb.appendChild(row);
   }
+}
+
+// Pops the on-screen key that matches a just-entered character (works for
+// letters as well as the '\n'/'\b' control keys) — called from both the
+// button click handler and the physical-keydown path so either input method
+// gives the same visible feedback.
+function flashKey(ch) {
+  const b = Array.from(document.querySelectorAll('.key')).find(k => k.dataset.key === ch);
+  if (!b) return;
+  b.classList.remove('pressed');
+  void b.offsetWidth; // restart animation
+  b.classList.add('pressed');
 }
 
 export function renderKeyboard(rows) {
@@ -236,4 +248,32 @@ export function animateLogo() {
   void el.offsetWidth; // restart animation
   el.classList.add('animate');
   el.querySelectorAll('.lt').forEach((t, i) => t.style.animationDelay = `${i * 90}ms`);
+}
+
+// Lightweight toast system: fixed top-center stack, independent of the
+// single-slot #banner. Used for low-stakes/ambient notices; win/lose/warn
+// messages keep using showBanner. Entrance/exit are transform+opacity only,
+// so the global prefers-reduced-motion rule (--dur-fast: 0ms) collapses them
+// to instant with no extra branching needed here.
+let toastContainer = null;
+function getToastContainer() {
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+  return toastContainer;
+}
+export function showToast(text) {
+  const container = getToastContainer();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = text;
+  container.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    t.classList.add('exit');
+    setTimeout(() => t.remove(), 300);
+  }, 3000);
 }

@@ -2,14 +2,14 @@
    play-area (board+keyboard) / right panel. No more layout switching —
    only the panel *content* changes with mode (solver vs practice), via the
    html[data-mode] rules below. */
-#layout-root { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px;
-  display: grid; grid-template-columns: 280px minmax(0, 1fr) 300px; gap: 24px;
+#layout-root { max-width: 1180px; margin: 20px auto 0; padding: 0 16px 30px;
+  display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 24px;
   align-items: start; flex: 1;
   animation: rise var(--dur-tile) var(--ease-pop) backwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
-#panel-left { display: flex; flex-direction: column; gap: 14px; }
-#panel-right { display: flex; flex-direction: column; gap: 14px; }
+#panel-left, #panel-right { display: flex; flex-direction: column; gap: 14px;
+  max-height: calc(100vh - 140px); overflow: hidden auto; }
 
 #center-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 
@@ -20,6 +20,7 @@
    itself in solver mode (components.css). */
 html[data-mode="solver"] #play-day { display: none; }
 html[data-mode="practice"] #past-panel { display: none; }
+html[data-mode="solver"] #practice-refresh-note { display: none; }
 
 /* below ~980px: stack single-column, center column first, then right panel,
    then left panel, everything centered */

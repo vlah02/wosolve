@@ -53,7 +53,7 @@ export function initGame(wordLists, initUI_) {
     // The persisted practice board is only ever read back when switching
     // modes within the same session (see switchMode/replay below).
     newPracticeGame();
-    UI.showBanner('New word picked — guess it in 6!', 'info');
+    UI.showToast('New word picked — guess it in 6!');
   }
   document.documentElement.dataset.mode = state.mode;
   document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode: state.mode } }));
@@ -100,7 +100,7 @@ function switchMode(mode) {
 // guesses submitted yet), never when merely resuming one already in progress.
 function maybeShowPracticeIntro() {
   if (state.mode === 'practice' && state.practice.rows.length === 0)
-    UI.showBanner("I picked a secret word — guess it in 6 tries!", 'info');
+    UI.showToast("I picked a secret word — guess it in 6 tries!");
 }
 
 function newPracticeGame() {
