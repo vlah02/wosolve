@@ -84,30 +84,10 @@
     <div class="dialog-body">
     <h3>How to play</h3>
     <div id="help-demo" class="help-demo">
-      <div class="help-demo-live"></div>
-      <ol class="help-demo-static-captions" hidden></ol>
-    </div>
-    <div class="help-copy">
-      <div class="dialog-group" data-help-section="solver">
-        <h5 class="section-label">Solver</h5>
-        <p>Type a guess, then tap a tile — or press <b>1</b>/<b>2</b>/<b>3</b> — to cycle its
-          color to match what Wordle showed you.</p>
-        <p>Arrow keys move between tiles; <b>Enter</b> submits and narrows the word list.
-          The &times; on a row undoes that guess.</p>
-      </div>
-      <div class="dialog-group" data-help-section="practice">
-        <h5 class="section-label">Practice</h5>
-        <p>The app picks a secret word — six tries, colors fill in automatically.</p>
-        <p>Stuck? Try <b>Hint</b>, or play a specific day's puzzle from the calendar.</p>
-      </div>
-    </div>
-    <div class="legend">
-      <div class="legend-row"><span class="legend-sample g"></span>Letter is in that exact spot</div>
-      <div class="legend-row"><span class="legend-sample y"></span>In the word, different spot</div>
-      <div class="legend-row"><span class="legend-sample n"></span>Not in the word (or no more copies)</div>
-      <div class="legend-row"><span class="legend-sample selected"></span>Selected tile — &larr;/&rarr; move, &uarr;/&darr; or 1/2/3 set color</div>
-      <div class="legend-row"><span class="legend-key"></span>Letter ruled out</div>
-      <p class="legend-shortcuts">Enter submit &middot; Backspace delete &middot; Esc close</p>
+      <div class="hd-stage" id="hd-stage"></div>
+      <p class="hd-caption" id="hd-caption"></p>
+      <div class="hd-dots" id="hd-dots"></div>
+      <ol class="hd-static-captions" hidden></ol>
     </div>
     <button class="close-modal">Close</button>
     </div>

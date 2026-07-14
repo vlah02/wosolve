@@ -205,10 +205,8 @@ html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); backgro
 .set-check input:focus-visible + .checkbox-box { outline: 2px solid var(--accent); outline-offset: 2px; }
 .set-sub { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
 
-/* help modal body copy: lighter, airier than bold paragraph blocks */
-.help-copy p { margin: 0 0 10px; font-size: .88rem; line-height: 1.65; color: var(--muted); }
-.help-copy p:last-child { margin-bottom: 0; }
-.help-copy p b { color: var(--ink); font-weight: 700; }
+/* help modal grows wider to fit the animated walkthrough stage */
+#help-modal { width: min(92vw, 560px); }
 
 /* themed play-a-day calendar: lives inside #play-day (panel-left), which is
    itself shown/hidden per mode in layouts.css */
@@ -316,84 +314,191 @@ html[data-mode="solver"] #stats-content { display: none; }
 .analysis-pick { font-size: .74rem; color: var(--muted); }
 .analysis-match { background: var(--tile-green); color: var(--tile-ink); }
 
-/* help modal color legend */
-.legend { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.legend-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); }
-.legend-sample { width: 22px; height: 22px; flex: none; border-radius: var(--radius-tile);
-  border-bottom: 3px solid transparent; color: var(--tile-ink); }
-.legend-sample.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
-.legend-sample.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
-.legend-sample.n { background: var(--tile-gray); border-bottom-color: var(--tile-edge-gray); }
-.legend-sample.selected { background: transparent; border: 2px solid var(--tile-empty-border);
-  outline: 2px solid var(--ink); outline-offset: 2px; }
-.legend-key { width: 22px; height: 22px; flex: none; border-radius: var(--radius-key);
-  background: var(--key-bg); opacity: .35; }
-.legend-shortcuts { font-size: .68rem; color: var(--muted); margin-top: -4px; }
-
-/* animated how-to-play demo (help modal): two scripted per-mode loops
-   (helpdemo.js) built entirely from transform/opacity so they stay smooth at
-   60fps. Durations/easing pull from the --dur-*/--ease-pop tokens so pacing
-   follows the active skin and — via the global prefers-reduced-motion rule
-   in tokens.css — collapse toward 0ms; reduced motion additionally bypasses
-   the animated loop entirely (helpdemo.js) in favor of a static frame plus
-   the plain caption list below (.help-demo-static-captions). */
-.help-demo { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-.help-demo-live { display: flex; flex-direction: column; align-items: center; width: 100%;
+/* ================================================================
+   Cinematic how-to-play walkthrough (helpdemo.js).
+   A tour engine (helpdemo.js) plays scripted steps over a miniature,
+   component-accurate mock of the real UI built entirely from `.hd-*` divs
+   styled by the shared design tokens — nothing here is the real
+   board/keyboard/panel markup. Every new keyframe/transition below only
+   ever touches transform/opacity (never width/height/left/top/margin) so
+   the whole thing stays 60fps regardless of skin; the fake word-count
+   ticker and every caption are updated via textContent from rAF/timeouts,
+   never by animating a layout property. Durations/easing pull from the
+   --dur-*/--ease-pop tokens so pacing follows the active skin and — via
+   the global prefers-reduced-motion rule in tokens.css — collapse toward
+   0ms; reduced motion additionally makes helpdemo.js bypass the animated
+   loop entirely in favor of one static frame plus the plain caption list
+   below (.hd-static-captions).
+   ================================================================ */
+.help-demo { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px;
   transition: opacity var(--dur-tile) ease; }
-.help-demo-live.fading { opacity: 0; }
-.help-demo-stage { position: relative; display: flex; flex-direction: column; align-items: center;
-  gap: 6px; padding: 0px 0 4px; width: 100%; }
-.help-demo-stage .brow.mini { gap: 5px; }
-.help-demo-stage .tile { animation: helpdemopop var(--dur-tile) var(--ease-pop); }
-@keyframes helpdemopop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.help-demo.fading { opacity: 0; }
 
-/* practice: face-down secret tiles, pulsing subtly until typing starts */
-.help-demo-stage .tile.facedown { background: var(--tile-gray); opacity: .55; }
-.help-demo-stage .brow.pulsing .tile.facedown {
-  animation: hdpulse calc(var(--dur-tile) * 2.6) var(--ease-pop) infinite; }
-@keyframes hdpulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.05); opacity: .85; } }
+.hd-stage { position: relative; width: 460px; max-width: 100%; height: 340px;
+  display: flex; gap: 8px; padding: 14px; overflow: hidden; box-sizing: border-box;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-panel); }
+.hd-stage.hd-mount { animation: hdStageIn var(--dur-tile) var(--ease-pop); }
+@keyframes hdStageIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
 
-/* one-shot highlight pulse (practice: "green = right spot, yellow = wrong spot") */
-.tile.hd-flash { animation: hdflash calc(var(--dur-fast) * 2) var(--ease-pop); }
-@keyframes hdflash { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.22); } }
+.hd-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; align-items: center;
+  transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
+.hd-left, .hd-right { flex: 0 0 100px; align-items: stretch; }
+.hd-center { flex: 1; justify-content: center; gap: 10px; }
+.hd-stage.hd-dimmed .hd-col { opacity: .35; }
+.hd-stage.hd-dimmed .hd-col.hd-focus { opacity: 1; transform: scale(1.06); z-index: 2; }
 
-/* celebratory row bounce (practice: second guess lands all green) */
-.brow.hd-celebrate { animation: hdcelebrate var(--dur-tile) var(--ease-pop); }
-@keyframes hdcelebrate { 0% { transform: scale(1); } 40% { transform: scale(1.08); }
-  70% { transform: scale(.97); } 100% { transform: scale(1); } }
+.hd-card-label { font-size: .52rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); font-weight: 700; text-align: center; }
 
-/* solver: pointer glides via transform (not left/top) so it stays compositor-only */
-.help-demo-pointer { position: absolute; left: 0; top: 0; width: 14px; height: 14px;
-  margin: -7px 0 0 -7px; opacity: 0; transform: translate(0, 0);
+/* mini board: 5 tiny rows x 5 tiles, reusing the real tile color tokens */
+.hd-board { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.hd-brow { display: flex; gap: 3px; }
+.hd-tile { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  font: 800 9px var(--font-display); text-transform: uppercase; color: var(--tile-ink);
+  border-radius: calc(var(--radius-tile) * .5); border: 1.5px solid var(--tile-empty-border);
+  border-bottom-width: 3px; border-bottom-color: transparent;
+  animation: hdTileIn var(--dur-tile) var(--ease-pop) backwards; }
+@keyframes hdTileIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+.hd-tile.pending { color: var(--ink); }
+.hd-tile.g { background: var(--tile-green); border-color: var(--tile-edge-green); }
+.hd-tile.y { background: var(--tile-yellow); border-color: var(--tile-edge-yellow); }
+.hd-tile.n { background: var(--tile-gray); border-color: var(--tile-edge-gray); }
+.hd-tile.facedown { background: var(--tile-gray); opacity: .55; border-color: transparent; color: transparent; }
+.hd-brow.pulsing .hd-tile.facedown { animation: hdTileIn var(--dur-tile) var(--ease-pop) backwards,
+  hdRowPulse calc(var(--dur-tile) * 2.6) var(--ease-pop) infinite; }
+@keyframes hdRowPulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.05); opacity: .85; } }
+/* Enter-committed row: flip reveal, staggered like the real board */
+@keyframes hdFlip { from { transform: rotateX(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.hd-brow.committed .hd-tile { animation: hdFlip var(--dur-tile) var(--ease-pop) backwards; }
+.hd-brow.committed .hd-tile:nth-child(2) { animation-delay: 60ms; }
+.hd-brow.committed .hd-tile:nth-child(3) { animation-delay: 120ms; }
+.hd-brow.committed .hd-tile:nth-child(4) { animation-delay: 180ms; }
+.hd-brow.committed .hd-tile:nth-child(5) { animation-delay: 240ms; }
+/* one-shot emphasis pulse layered on a specific tile/key/row (e.g. "gray
+   means not in the word") on top of the column-level spotlight */
+.hd-pulse { animation: hdPulse calc(var(--dur-fast) * 2.4) var(--ease-pop); }
+@keyframes hdPulse { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.3); } }
+.hd-brow.hd-celebrate { animation: hdCelebrate var(--dur-tile) var(--ease-pop); }
+@keyframes hdCelebrate { 0% { transform: scale(1); } 40% { transform: scale(1.1); }
+  70% { transform: scale(.96); } 100% { transform: scale(1); } }
+
+/* mini keyboard: 3 rows of small plain key rects */
+.hd-keyboard { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.hd-krow { display: flex; gap: 2px; }
+.hd-key { width: 14px; height: 18px; display: flex; align-items: center; justify-content: center;
+  font-size: 6px; font-weight: 700; color: var(--key-ink); border-radius: 3px;
+  background: var(--key-bg); border-bottom: 2px solid var(--key-edge);
+  transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
+.hd-key.wide { width: 22px; }
+.hd-key.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
+.hd-key.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
+@keyframes hdKeyPress { 40% { transform: scale(1.35) translateY(-2px); } }
+.hd-key.press { animation: hdKeyPress calc(var(--dur-fast) * 2) var(--ease-pop); }
+
+/* mini list rows: past answers / word list, cascading in and (on undo)
+   sliding back out — transform/opacity only, never width/height */
+.hd-mini-list { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.hd-mini-row { height: 11px; border-radius: 3px; background: var(--line); transform-origin: left center;
+  animation: hdRowIn var(--dur-tile) var(--ease-pop) backwards; }
+@keyframes hdRowIn { from { opacity: 0; transform: translateY(4px) scaleX(.7); } to { opacity: 1; transform: none; } }
+.hd-mini-list .hd-mini-row:nth-child(1) { animation-delay: 0ms; }
+.hd-mini-list .hd-mini-row:nth-child(2) { animation-delay: 60ms; }
+.hd-mini-list .hd-mini-row:nth-child(3) { animation-delay: 120ms; }
+.hd-mini-list .hd-mini-row:nth-child(4) { animation-delay: 180ms; }
+.hd-mini-list .hd-mini-row:nth-child(5) { animation-delay: 240ms; }
+.hd-mini-row.hd-exit { animation: hdRowOut var(--dur-tile) var(--ease-pop) forwards; }
+@keyframes hdRowOut { to { opacity: 0; transform: translateX(-14px); } }
+.hd-mini-row.hd-x { position: relative; }
+.hd-mini-row .hd-x-mark { position: absolute; right: 3px; top: 50%; transform: translate(0, -50%) scale(0);
+  font-size: 8px; line-height: 1; color: var(--muted); transition: transform var(--dur-fast) var(--ease-pop); }
+.hd-mini-row .hd-x-mark.show { transform: translate(0, -50%) scale(1); }
+
+/* mini suggestions readout: fake count ticks via textContent (rAF), hero
+   word fades/scales in */
+.hd-suggest { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hd-count { font-size: .56rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums;
+  opacity: 0; transition: opacity var(--dur-fast); }
+.hd-count.show { opacity: 1; }
+.hd-hero { font: 800 .82rem var(--font-display); letter-spacing: .1em; color: var(--ink);
+  opacity: 0; transform: scale(.8); transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
+.hd-hero.show { opacity: 1; transform: scale(1); }
+
+/* mini hint card: a blur cover fades on/off — only ever transitions
+   opacity, the blur amount itself is a static value, never animated */
+.hd-hint { position: relative; display: inline-flex; }
+.hd-hint-cover { position: absolute; inset: -2px; backdrop-filter: blur(3px); background: rgba(130, 130, 130, .4);
+  border-radius: 4px; opacity: 1; transition: opacity var(--dur-tile) ease; }
+.hd-hint-cover.hd-wiped { opacity: 0; }
+
+/* mini stat bars: fill via scaleX (never width) */
+.hd-stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.hd-stat-bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.hd-stat-bar i { display: block; height: 100%; width: 100%; border-radius: 99px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left center; transition: transform var(--dur-tile) var(--ease-pop); }
+.hd-stat-bar.fill i { transform: scaleX(var(--v, 1)); }
+
+/* mini play-a-day calendar */
+.hd-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.hd-cal-day { position: relative; width: 9px; height: 9px; border-radius: 2px; background: var(--line);
+  opacity: 0; transform: scale(.5); animation: hdCalIn var(--dur-fast) var(--ease-pop) both;
+  transition: transform var(--dur-fast) var(--ease-pop); }
+@keyframes hdCalIn { to { opacity: 1; transform: scale(1); } }
+.hd-cal-day::after { content: ''; position: absolute; left: 50%; bottom: 1px; transform: translateX(-50%);
+  width: 2.5px; height: 2.5px; border-radius: 50%; background: var(--tile-green); opacity: 0;
+  transition: opacity var(--dur-fast); }
+.hd-cal-day.hd-dot::after { opacity: 1; }
+.hd-cal-day.hd-picked { background: var(--accent); transform: scale(1.3); }
+
+/* mini refresh icon: spins via transform only */
+.hd-refresh { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--muted);
+  border-top-color: transparent; }
+.hd-refresh.spin { animation: hdSpin var(--dur-tile) linear; }
+@keyframes hdSpin { to { transform: rotate(360deg); } }
+
+/* pointer glides between tiles via transform: translate (never left/top) */
+.hd-pointer { position: absolute; left: 0; top: 0; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  opacity: 0; transform: translate(0, 0); border-radius: 50%; background: var(--accent);
   transition: transform var(--dur-tile) var(--ease-pop), opacity var(--dur-fast);
-  pointer-events: none; }
-.help-demo-pointer.show { opacity: .9; }
-.help-demo-pointer-dot { display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--accent); }
-.help-demo-pointer.tap .help-demo-pointer-dot { animation: helpdemotap calc(var(--dur-fast) * 2) var(--ease-pop); }
-@keyframes helpdemotap { 0%, 100% { transform: scale(1); } 45% { transform: scale(.55); } }
+  pointer-events: none; z-index: 3; }
+.hd-pointer.show { opacity: .9; }
+.hd-pointer.tap { animation: hdTap calc(var(--dur-fast) * 2) var(--ease-pop); }
+@keyframes hdTap { 45% { transform: scale(.5); } }
 
-.help-demo-key { display: inline-flex; align-items: center; font-size: .68rem; font-weight: 700;
-  padding: 4px 12px; border-radius: 999px; background: var(--line); color: var(--muted);
-  opacity: 0; transform: scale(.85);
-  transition: opacity var(--dur-fast) var(--ease-pop), transform var(--dur-fast) var(--ease-pop),
-    background var(--dur-fast), color var(--dur-fast); }
-.help-demo-key.show { opacity: 1; transform: scale(1); }
-.help-demo-key.press { background: var(--accent); color: #fff; transform: scale(1.08); }
+/* micro-caption chips: small floating labels that explain a color the
+   instant it appears (e.g. "yellow = right letter, wrong spot") */
+.hd-chip { position: absolute; left: 50%; bottom: 8px; transform: translate(-50%, 6px); opacity: 0;
+  background: var(--bg-modal); border: 1px solid var(--line); color: var(--ink);
+  font-size: .6rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+  transition: opacity var(--dur-fast) var(--ease-pop), transform var(--dur-fast) var(--ease-pop);
+  pointer-events: none; z-index: 4; }
+.hd-chip.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* solver: mini suggestion readout — count ticks down via rAF textContent
-   writes (cheap, no layout thrash); hero word fades in on transform/opacity */
-.help-demo-suggest { text-align: center; opacity: 0; transform: translateY(4px);
+/* the live caption bar below the stage — container slides up + fades in,
+   and its letters cascade in on top via a per-span animation-delay */
+.hd-caption { margin: 12px 0 0; min-height: 2.4em; font-size: .84rem; color: var(--ink); font-weight: 600;
+  text-align: center; opacity: 0; transform: translateY(8px);
   transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
-.help-demo-suggest.show { opacity: 1; transform: none; }
-.help-demo-count { display: block; font-size: .72rem; font-weight: 700; color: var(--muted);
-  font-variant-numeric: tabular-nums; }
-.help-demo-hero { margin-top: 2px; font-size: 1.15rem; opacity: 0; transform: translateY(4px);
-  transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
-.help-demo-hero.show { opacity: 1; transform: none; }
+.hd-caption.show { opacity: 1; transform: none; }
+.hd-caption span { display: inline-block; opacity: 0; transform: translateY(5px);
+  animation: hdLetterIn var(--dur-fast) var(--ease-pop) forwards;
+  animation-delay: calc(var(--i, 0) * 15ms); }
+@keyframes hdLetterIn { to { opacity: 1; transform: none; } }
 
-.help-demo-caption { margin: 8px 0 0; font-size: .78rem; color: var(--muted); text-align: center; min-height: 1.2em; }
-.help-demo-static-captions { margin: 10px 0 0; padding-left: 20px; font-size: .78rem; color: var(--muted); text-align: left; }
-.help-demo-static-captions li { margin-bottom: 4px; }
+/* step-progress dots */
+.hd-dots { display: flex; gap: 6px; margin-top: 14px; justify-content: center; }
+.hd-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line);
+  transform: scale(1); transition: transform var(--dur-fast) var(--ease-pop); }
+.hd-dot.on { background: var(--accent); transform: scale(1.35); }
+
+.hd-static-captions { margin: 14px 0 0; padding-left: 20px; font-size: .8rem; color: var(--muted); text-align: left; }
+.hd-static-captions li { margin-bottom: 5px; }
+.hd-mt { margin-top: 10px; }
+
+@media (max-width: 480px) {
+  .hd-stage { height: 300px; padding: 10px; }
+  .hd-left, .hd-right { flex-basis: 82px; }
+}
 
 /* ===== mobile / responsive pass (Task F5) ===== */
 @media (max-width: 480px) {
