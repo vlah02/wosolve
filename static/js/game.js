@@ -1,7 +1,10 @@
 import * as S from './solver.js';
 import * as UI from './ui.js';
+import * as Calendar from './calendar.js';
 import { getSettings } from './settings.js';
 import { analyzeGame, showAnalysis } from './analysis.js';
+
+const CALENDAR_MIN = '2021-06-19';
 
 const KEY = 'wosolve.game.v1';
 const RECENT_KEY = 'wosolve.recent.v1';
@@ -34,6 +37,15 @@ function recordRecent(date, won) {
   recentPlayed = [{ date, won }, ...recentPlayed].slice(0, RECENT_CAP);
   saveRecent();
   UI.renderRecentlyPlayed(recentPlayed);
+  Calendar.refreshCalendar({ playedDates: playedMap() });
+}
+
+// { 'YYYY-MM-DD': 'won'|'lost' } for the calendar's per-day dots. recentPlayed
+// is newest-first, so the first occurrence of a date is its latest result.
+function playedMap() {
+  const map = {};
+  for (const r of recentPlayed) if (!(r.date in map)) map[r.date] = r.won ? 'won' : 'lost';
+  return map;
 }
 
 let entry = { letters: '', marks: '' };
@@ -87,6 +99,7 @@ function switchMode(mode) {
   state.mode = mode;
   entry = { letters: '', marks: '' };
   if (mode === 'practice' && (!state.practice.secret || state.practice.done)) newPracticeGame();
+  if (mode === 'practice') Calendar.refreshCalendar({ selected: state.practice.dateLabel });
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === mode));
   document.documentElement.dataset.mode = mode;
@@ -110,20 +123,20 @@ function newPracticeGame() {
 }
 
 function initPracticeControls() {
-  const dateInput = document.getElementById('practice-date');
-  const dateBtn = document.getElementById('practice-date-btn');
-  if (!dateInput || !dateBtn) return;
-  if (pastMeta) {
-    dateInput.max = pastMeta.through;
-  } else {
-    dateInput.disabled = true;
-    dateBtn.disabled = true;
+  const container = document.getElementById('play-day-calendar');
+  if (!container) return;
+  if (!pastMeta) {
+    container.innerHTML = '<p class="muted-note">Dated puzzles unavailable.</p>';
+    return;
   }
-  dateBtn.onclick = () => onPlayDate(dateInput.value);
+  Calendar.initCalendar({
+    min: CALENDAR_MIN, max: pastMeta.through,
+    selected: state.practice.dateLabel, playedDates: playedMap(),
+    onPick: onPlayDate,
+  });
 }
 
 function onPlayDate(dateStr) {
-  if (!dateStr) { UI.showBanner('Pick a date first', 'warn', []); return; }
   const word = byDate[dateStr];
   if (!word) {
     UI.showBanner('No answer on record for that date', 'warn');
@@ -134,6 +147,7 @@ function onPlayDate(dateStr) {
   UI.showBanner(`Wordle from ${dateStr} — guess it in 6!`, 'info');
   save(); rerender();
   UI.animateBoardReset();
+  Calendar.refreshCalendar({ selected: dateStr });
 }
 
 function onKey(k) {
@@ -205,6 +219,7 @@ function solved(guesses) {
 
 function replay() {
   newPracticeGame(); UI.clearBanner(); maybeShowPracticeIntro(); save(); rerender();
+  Calendar.refreshCalendar({ selected: state.practice.dateLabel });
 }
 
 function onUndo() {
