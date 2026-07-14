@@ -27,7 +27,7 @@ async function boot() {
   let lists;
   try { lists = await fetchLists(); }
   catch {
-    document.querySelector('#board-zone').innerHTML =
+    document.querySelector('#center-col').innerHTML =
       '<div class="panel">Could not load word lists. <button class="count-chip" onclick="location.reload()">Retry</button></div>';
     return;
   }

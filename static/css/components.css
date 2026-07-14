@@ -44,7 +44,6 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #logo.animate .lt { animation: flipin var(--dur-tile) var(--ease-pop) backwards; }
 
 /* board */
-#board-zone { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 #board { display: flex; flex-direction: column; gap: 5px; align-items: center; padding: 8px 0; }
 .brow { display: flex; gap: 5px; position: relative; }
 .row-remove { position: absolute; right: -34px; top: 50%; transform: translateY(-50%);
