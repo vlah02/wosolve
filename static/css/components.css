@@ -320,48 +320,61 @@ html[data-mode="solver"] #stats-content { display: none; }
 .analysis-match { background: var(--tile-green); color: var(--tile-ink); }
 
 /* ================================================================
-   Cinematic how-to-play walkthrough (helpdemo.js).
-   A tour engine (helpdemo.js) plays scripted steps over a miniature,
-   component-accurate mock of the real UI built entirely from `.hd-*` divs
-   styled by the shared design tokens — nothing here is the real
-   board/keyboard/panel markup. Every new keyframe/transition below only
-   ever touches transform/opacity (never width/height/left/top/margin) so
-   the whole thing stays 60fps regardless of skin; the fake word-count
-   ticker and every caption are updated via textContent from rAF/timeouts,
-   never by animating a layout property. Durations/easing pull from the
-   --dur-*/--ease-pop tokens so pacing follows the active skin and — via
-   the global prefers-reduced-motion rule in tokens.css — collapse toward
-   0ms; reduced motion additionally makes helpdemo.js bypass the animated
-   loop entirely in favor of one static frame plus the plain caption list
-   below (.hd-static-captions).
+   Cinematic how-to-play walkthrough (helpdemo.js) — CAMERA SYSTEM.
+   A tour engine (helpdemo.js) plays scripted steps over `.hd-mock`, a
+   LARGE, DETAILED, component-accurate mock of the real UI (840x520
+   logical px) built entirely from `.hd-*` divs styled by the shared
+   design tokens — nothing here is the real board/keyboard/panel markup.
+   `.hd-stage` is a small (~480x330) viewport with overflow hidden; a
+   virtual camera pans/zooms by animating `transform: translate() scale()`
+   on `.hd-mock` so every step frames its subject large and readable, the
+   same way a screen recording zooms into whatever it's explaining. Every
+   new keyframe/transition below only ever touches transform/opacity
+   (never width/height/left/top/margin) so the whole thing stays 60fps
+   regardless of skin; the fake word-count ticker and every caption are
+   updated via textContent from rAF/timeouts, never by animating a layout
+   property. Durations/easing pull from the --dur-* / --ease-pop tokens (the
+   camera's own .8s duration is zeroed separately below) so pacing follows
+   the active skin and — via the global prefers-reduced-motion rule in
+   tokens.css — collapse toward 0ms; reduced motion additionally makes
+   helpdemo.js bypass the animated loop entirely in favor of one static
+   wide shot plus the plain caption list below (.hd-static-captions).
    ================================================================ */
 .help-demo { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px;
   transition: opacity var(--dur-tile) ease; }
 .help-demo.fading { opacity: 0; }
 
-.hd-stage { position: relative; width: 460px; max-width: 100%; height: 340px;
-  margin: 0 auto; display: flex; gap: 8px; padding: 14px; overflow: hidden; box-sizing: border-box;
+.hd-stage { position: relative; width: 480px; max-width: 100%; height: 330px;
+  margin: 0 auto; overflow: hidden; box-sizing: border-box;
   background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-panel); }
 .hd-stage.hd-mount { animation: hdStageIn var(--dur-tile) var(--ease-pop); }
 @keyframes hdStageIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
 
-.hd-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; align-items: center;
-  transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
-.hd-left, .hd-right { flex: 0 0 100px; align-items: stretch; }
-.hd-center { flex: 1; justify-content: flex-start; gap: 10px; }
-.hd-stage.hd-dimmed .hd-col { opacity: .35; }
-.hd-stage.hd-dimmed .hd-col.hd-focus { opacity: 1; transform: scale(1.06); z-index: 2; }
+/* the big detailed canvas the camera moves around inside — fixed logical
+   size regardless of the stage's rendered size, cropped by the stage's
+   overflow:hidden; only ever transform: translate()+scale() is animated */
+.hd-mock { position: absolute; top: 0; left: 0; width: 880px; height: 520px;
+  transform-origin: 0 0; display: flex; gap: 28px; padding: 26px; box-sizing: border-box;
+  transition: transform .8s cubic-bezier(.4, 0, .2, 1); will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .hd-mock { transition: none; } }
 
-.hd-card-label { font-size: .52rem; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--muted); font-weight: 700; text-align: center; }
+.hd-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.hd-left, .hd-right { flex: 0 0 210px; }
+.hd-center { flex: 1 1 auto; align-items: center; justify-content: flex-start; gap: 26px; padding-top: 6px; }
 
-/* mini board: 5 tiny rows x 5 tiles, reusing the real tile color tokens */
-.hd-board { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-.hd-brow { display: flex; gap: 3px; }
-.hd-tile { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-  font: 800 9px var(--font-display); text-transform: uppercase; color: var(--tile-ink);
-  border-radius: calc(var(--radius-tile) * .5); border: 1.5px solid var(--tile-empty-border);
-  border-bottom-width: 3px; border-bottom-color: transparent;
+.hd-card { background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-panel);
+  padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.hd-card-label { font-size: .78rem; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); font-weight: 800; }
+
+/* board: 6 rows x 5 tiles, reusing the real tile color tokens — readable
+   at every zoom, from the wide establishing shot to a full board close-up */
+.hd-board { display: flex; flex-direction: column; gap: 7px; align-items: center; }
+.hd-brow { display: flex; gap: 7px; }
+.hd-tile { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  font: 800 18px var(--font-display); text-transform: uppercase; color: var(--tile-ink);
+  border-radius: calc(var(--radius-tile) * .7); border: 2px solid var(--tile-empty-border);
+  border-bottom-width: 4px; border-bottom-color: transparent;
   animation: hdTileIn var(--dur-tile) var(--ease-pop) backwards; }
 @keyframes hdTileIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
 .hd-tile.pending { color: var(--ink); }
@@ -380,30 +393,40 @@ html[data-mode="solver"] #stats-content { display: none; }
 .hd-brow.committed .hd-tile:nth-child(4) { animation-delay: 180ms; }
 .hd-brow.committed .hd-tile:nth-child(5) { animation-delay: 240ms; }
 /* one-shot emphasis pulse layered on a specific tile/key/row (e.g. "gray
-   means not in the word") on top of the column-level spotlight */
+   means not in the word") independent of the camera move */
 .hd-pulse { animation: hdPulse calc(var(--dur-fast) * 2.4) var(--ease-pop); }
 @keyframes hdPulse { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.3); } }
 .hd-brow.hd-celebrate { animation: hdCelebrate var(--dur-tile) var(--ease-pop); }
 @keyframes hdCelebrate { 0% { transform: scale(1); } 40% { transform: scale(1.1); }
   70% { transform: scale(.96); } 100% { transform: scale(1); } }
+/* click feedback: brief non-uniform squash on the element the cursor taps */
+.hd-squash { animation: hdSquash .3s var(--ease-pop); }
+@keyframes hdSquash { 0% { transform: scale(1); } 40% { transform: scale(1.12, .86); } 100% { transform: scale(1); } }
 
-/* mini keyboard: 3 rows of small plain key rects */
-.hd-keyboard { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-.hd-krow { display: flex; gap: 2px; }
-.hd-key { width: 14px; height: 18px; display: flex; align-items: center; justify-content: center;
-  font-size: 6px; font-weight: 700; color: var(--key-ink); border-radius: 3px;
-  background: var(--key-bg); border-bottom: 2px solid var(--key-edge);
+/* keyboard: 3 rows of real keys with letters, big enough to read once the
+   camera closes in on a single key (e.g. Enter) */
+.hd-keyboard { display: flex; flex-direction: column; gap: 7px; align-items: center; }
+.hd-krow { display: flex; gap: 5px; }
+.hd-key { min-width: 30px; height: 32px; padding: 0 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--key-ink); border-radius: 5px;
+  background: var(--key-bg); border-bottom: 3px solid var(--key-edge);
   transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
-.hd-key.wide { width: 22px; }
+.hd-key.wide { min-width: 46px; }
 .hd-key.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
 .hd-key.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
-@keyframes hdKeyPress { 40% { transform: scale(1.35) translateY(-2px); } }
+@keyframes hdKeyPress { 40% { transform: scale(1.3) translateY(-3px); } }
 .hd-key.press { animation: hdKeyPress calc(var(--dur-fast) * 2) var(--ease-pop); }
 
-/* mini list rows: past answers / word list, cascading in and (on undo)
+/* past-answers rows: real date + word text, cascading in and (on undo)
    sliding back out — transform/opacity only, never width/height */
-.hd-mini-list { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-.hd-mini-row { height: 11px; border-radius: 3px; background: var(--line); transform-origin: left center;
+/* reserves the full 5-row height up front so the camera (framed once, at
+   step start, around the card's current size) never has to re-center as
+   rows cascade in after it — otherwise the card grows taller than the
+   already-committed close-up and the bottom rows get cropped */
+.hd-mini-list { display: flex; flex-direction: column; gap: 8px; width: 100%; min-height: 166px; }
+.hd-mini-row { height: 26px; border-radius: 6px; background: var(--line); position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px;
+  box-sizing: border-box; transform-origin: left center;
   animation: hdRowIn var(--dur-tile) var(--ease-pop) backwards; }
 @keyframes hdRowIn { from { opacity: 0; transform: translateY(4px) scaleX(.7); } to { opacity: 1; transform: none; } }
 .hd-mini-list .hd-mini-row:nth-child(1) { animation-delay: 0ms; }
@@ -411,84 +434,113 @@ html[data-mode="solver"] #stats-content { display: none; }
 .hd-mini-list .hd-mini-row:nth-child(3) { animation-delay: 120ms; }
 .hd-mini-list .hd-mini-row:nth-child(4) { animation-delay: 180ms; }
 .hd-mini-list .hd-mini-row:nth-child(5) { animation-delay: 240ms; }
+.hd-mini-date { font-size: .72rem; color: var(--muted); font-weight: 700; }
+.hd-mini-word { font-size: .82rem; color: var(--ink); font-weight: 800; letter-spacing: .05em; }
 .hd-mini-row.hd-exit { animation: hdRowOut var(--dur-tile) var(--ease-pop) forwards; }
-@keyframes hdRowOut { to { opacity: 0; transform: translateX(-14px); } }
-.hd-mini-row.hd-x { position: relative; }
-.hd-mini-row .hd-x-mark { position: absolute; right: 3px; top: 50%; transform: translate(0, -50%) scale(0);
-  font-size: 8px; line-height: 1; color: var(--muted); transition: transform var(--dur-fast) var(--ease-pop); }
+@keyframes hdRowOut { to { opacity: 0; transform: translateX(-16px); } }
+.hd-mini-row .hd-x-mark { position: absolute; right: 8px; top: 50%; transform: translate(0, -50%) scale(0);
+  font-size: 14px; line-height: 1; color: var(--muted); transition: transform var(--dur-fast) var(--ease-pop); }
 .hd-mini-row .hd-x-mark.show { transform: translate(0, -50%) scale(1); }
 
-/* mini suggestions readout: fake count ticks via textContent (rAF), hero
-   word fades/scales in */
-.hd-suggest { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.hd-count { font-size: .56rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums;
-  opacity: 0; transition: opacity var(--dur-fast); }
-.hd-count.show { opacity: 1; }
-.hd-hero { font: 800 .82rem var(--font-display); letter-spacing: .1em; color: var(--ink);
+/* suggestions card: hero word, "N words left" chip, and 4 ranked word rows
+   each with a green confidence bar (scaleX only) behind the word text */
+.hd-hero { align-self: center; font: 800 1.9rem var(--font-display); letter-spacing: .1em; color: var(--ink);
   opacity: 0; transform: scale(.8); transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
 .hd-hero.show { opacity: 1; transform: scale(1); }
+.hd-count-chip { align-self: center; font-size: .8rem; font-weight: 700; color: var(--muted);
+  font-variant-numeric: tabular-nums; background: var(--line); padding: 4px 14px; border-radius: 999px;
+  opacity: 0; transition: opacity var(--dur-fast); }
+.hd-count-chip.show { opacity: 1; }
+/* same reservation as .hd-mini-list, sized for the 4 ranked word rows */
+.hd-word-rows { display: flex; flex-direction: column; gap: 8px; min-height: 136px; }
+.hd-word-row { position: relative; height: 28px; border-radius: 6px; overflow: hidden; background: var(--line);
+  display: flex; align-items: center; padding: 0 10px; box-sizing: border-box;
+  animation: hdRowIn var(--dur-tile) var(--ease-pop) backwards; }
+.hd-word-row-bar { position: absolute; inset: 0; background: var(--tile-green); opacity: .4;
+  transform-origin: left center; transform: scaleX(0); transition: transform .5s var(--ease-pop); }
+.hd-word-row.show .hd-word-row-bar { transform: scaleX(var(--w, 1)); }
+.hd-word-row-text { position: relative; font: 700 13px var(--font-display); letter-spacing: .05em; color: var(--ink); }
 
-/* mini hint card: a blur cover fades on/off — only ever transitions
-   opacity, the blur amount itself is a static value, never animated */
-.hd-hint { position: relative; display: inline-flex; }
-.hd-hint-cover { position: absolute; inset: -2px; backdrop-filter: blur(3px); background: rgba(130, 130, 130, .4);
-  border-radius: 4px; opacity: 1; transition: opacity var(--dur-tile) ease; }
+/* hint card: a blur cover fades on/off — only ever transitions opacity,
+   the blur amount itself is a static value, never animated */
+.hd-hint { position: relative; display: inline-flex; align-self: center; }
+.hd-hint-cover { position: absolute; inset: -6px; backdrop-filter: blur(6px); background: rgba(130, 130, 130, .45);
+  border-radius: 8px; opacity: 1; transition: opacity var(--dur-tile) ease; }
 .hd-hint-cover.hd-wiped { opacity: 0; }
 
-/* mini stat bars: fill via scaleX (never width) */
-.hd-stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-.hd-stat-bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+/* stats card: 3 labeled chips + 3 mini bars that fill via scaleX */
+.hd-stat-chips { display: flex; gap: 8px; }
+.hd-stat-chip { flex: 1; background: var(--line); border-radius: 8px; padding: 8px 4px; text-align: center; }
+.hd-stat-chip b { display: block; font: 800 1rem var(--font-display); color: var(--ink); }
+.hd-stat-chip span { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.hd-stats { display: flex; flex-direction: column; gap: 7px; }
+.hd-stat-bar { height: 9px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .hd-stat-bar i { display: block; height: 100%; width: 100%; border-radius: 99px; background: var(--accent);
   transform: scaleX(0); transform-origin: left center; transition: transform var(--dur-tile) var(--ease-pop); }
 .hd-stat-bar.fill i { transform: scaleX(var(--v, 1)); }
 
-/* mini play-a-day calendar */
-.hd-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.hd-cal-day { position: relative; width: 9px; height: 9px; border-radius: 2px; background: var(--line);
+/* play-a-day calendar: real day numbers, one ringed ("today"), one dotted
+   ("already played") */
+.hd-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.hd-cal-day { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; background: var(--line); font-size: .68rem; font-weight: 700; color: var(--muted);
   opacity: 0; transform: scale(.5); animation: hdCalIn var(--dur-fast) var(--ease-pop) both;
   transition: transform var(--dur-fast) var(--ease-pop); }
 @keyframes hdCalIn { to { opacity: 1; transform: scale(1); } }
-.hd-cal-day::after { content: ''; position: absolute; left: 50%; bottom: 1px; transform: translateX(-50%);
-  width: 2.5px; height: 2.5px; border-radius: 50%; background: var(--tile-green); opacity: 0;
-  transition: opacity var(--dur-fast); }
-.hd-cal-day.hd-dot::after { opacity: 1; }
-.hd-cal-day.hd-picked { background: var(--accent); transform: scale(1.3); }
+.hd-cal-day.hd-today { box-shadow: 0 0 0 2px var(--accent) inset; color: var(--ink); }
+.hd-cal-day::after { content: ''; position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%) scale(0);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--tile-green); opacity: 0;
+  transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
+.hd-cal-day.hd-dot::after { opacity: 1; transform: translateX(-50%) scale(1); }
+.hd-cal-day.hd-picked { background: var(--accent); color: var(--tile-ink); transform: scale(1.12); }
 
-/* mini refresh icon: spins via transform only */
-.hd-refresh { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--muted);
-  border-top-color: transparent; }
+/* refresh icon: hidden until its own step reveals it (fading it in rather
+   than leaving a permanently-visible, unexplained ring in every earlier
+   shot); spins via transform only */
+.hd-refresh { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--muted);
+  border-top-color: transparent; opacity: 0; transition: opacity var(--dur-fast); }
+.hd-refresh.show { opacity: 1; }
 .hd-refresh.spin { animation: hdSpin var(--dur-tile) linear; }
 @keyframes hdSpin { to { transform: rotate(360deg); } }
 
-/* pointer glides between tiles via transform: translate (never left/top) */
-.hd-pointer { position: absolute; left: 0; top: 0; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+/* cursor: an accent-ringed dot with a drop shadow, always visible while
+   moving, child of .hd-mock so it tracks the camera automatically; taps
+   trigger a ripple ring + a squash of the tapped element (see .hd-squash) */
+.hd-pointer { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px;
   opacity: 0; transform: translate(0, 0); border-radius: 50%; background: var(--accent);
-  transition: transform var(--dur-tile) var(--ease-pop), opacity var(--dur-fast);
-  pointer-events: none; z-index: 3; }
-.hd-pointer.show { opacity: .9; }
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent), 0 2px 6px rgba(0, 0, 0, .35);
+  transition: transform .5s var(--ease-pop), opacity var(--dur-fast);
+  pointer-events: none; z-index: 5; }
+.hd-pointer.show { opacity: .95; }
 .hd-pointer.tap { animation: hdTap calc(var(--dur-fast) * 2) var(--ease-pop); }
-@keyframes hdTap { 45% { transform: scale(.5); } }
+@keyframes hdTap { 45% { transform: scale(.55); } }
+.hd-ripple { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  border-radius: 50%; border: 2px solid var(--accent); opacity: 0; transform: translate(0, 0) scale(1);
+  pointer-events: none; z-index: 5; }
+.hd-ripple.go { animation: hdRipple .5s var(--ease-pop); }
+@keyframes hdRipple {
+  0% { opacity: .9; transform: translate(var(--tx, 0), var(--ty, 0)) scale(.6); }
+  100% { opacity: 0; transform: translate(var(--tx, 0), var(--ty, 0)) scale(2.6); }
+}
 
-/* micro-caption chips: small floating labels that explain a color the
-   instant it appears (e.g. "yellow = right letter, wrong spot") */
-.hd-chip { position: absolute; left: 50%; bottom: 8px; transform: translate(-50%, 6px); opacity: 0;
+/* micro-caption chips: small floating labels anchored next to the tile
+   they explain (e.g. "yellow = right letter, wrong spot"), inside the
+   camera view so they zoom/pan along with everything else */
+.hd-chip { position: absolute; left: 0; top: 0; opacity: 0;
   background: var(--bg-modal); border: 1px solid var(--line); color: var(--ink);
-  font-size: .6rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
-  white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
-  transition: opacity var(--dur-fast) var(--ease-pop), transform var(--dur-fast) var(--ease-pop);
-  pointer-events: none; z-index: 4; }
-.hd-chip.show { opacity: 1; transform: translate(-50%, 0); }
+  font: 700 13px var(--font-display); padding: 5px 12px; border-radius: 999px;
+  white-space: nowrap; pointer-events: none; z-index: 6;
+  transition: opacity var(--dur-fast) var(--ease-pop), transform var(--dur-fast) var(--ease-pop); }
+.hd-chip.show { opacity: 1; }
 
-/* the live caption bar below the stage — container slides up + fades in,
-   and its letters cascade in on top via a per-span animation-delay */
-.hd-caption { margin: 12px 0 0; min-height: 2.4em; font-size: .84rem; color: var(--ink); font-weight: 600;
+/* the live caption bar below the stage: a fixed-height centered area,
+   whole-line fade+rise per step (no typewriter — a frame landing mid-word
+   reads as a glitch) */
+.hd-caption { margin: 12px 0 0; min-height: 2.4em; display: flex; align-items: center; justify-content: center;
+  font-size: .84rem; color: var(--ink); font-weight: 600;
   text-align: center; opacity: 0; transform: translateY(8px);
   transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
 .hd-caption.show { opacity: 1; transform: none; }
-.hd-caption span { display: inline-block; opacity: 0; transform: translateY(5px);
-  animation: hdLetterIn var(--dur-fast) var(--ease-pop) forwards;
-  animation-delay: calc(var(--i, 0) * 15ms); }
-@keyframes hdLetterIn { to { opacity: 1; transform: none; } }
 
 /* step-progress dots */
 .hd-dots { display: flex; gap: 6px; margin-top: 14px; justify-content: center; }
@@ -501,8 +553,7 @@ html[data-mode="solver"] #stats-content { display: none; }
 .hd-mt { margin-top: 10px; }
 
 @media (max-width: 480px) {
-  .hd-stage { height: 300px; padding: 10px; }
-  .hd-left, .hd-right { flex-basis: 82px; }
+  .hd-stage { height: 280px; }
 }
 
 /* ===== mobile / responsive pass (Task F5) ===== */
