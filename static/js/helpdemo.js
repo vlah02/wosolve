@@ -44,10 +44,10 @@ const SUGGESTIONS = ['SLATE', 'CRANE', 'TRACE', 'ADIEU'];
 const SUGGESTION_WEIGHTS = [1, .78, .6, .46];
 const PAST_ANSWERS = [
   { date: '2026-07-13', word: 'STOUT' },
-  { date: '2026-07-12', word: 'MANGO' },
-  { date: '2026-07-11', word: 'PRIDE' },
-  { date: '2026-07-10', word: 'CHESS' },
-  { date: '2026-07-09', word: 'BRAVO' },
+  { date: '2026-07-12', word: 'CLACK' },
+  { date: '2026-07-11', word: 'AVIAN' },
+  { date: '2026-07-10', word: 'CANAL' },
+  { date: '2026-07-09', word: 'AMEND' },
 ];
 
 const PRACTICE_WORD_1 = 'TRACE';
@@ -66,11 +66,18 @@ const KEY_ROWS = ['qwertyuiop', 'asdfghjkl', '\nzxcvbnm\b'];
 const FADE_MS = 520; // upper bound covering every skin's --dur-tile
 const CAM_MS = 820;  // camera move duration (matches the .hd-mock CSS transition + margin)
 
-// camera zoom presets — tuned against the 880x520 .hd-mock canvas. `board`
-// is deliberately modest: the board is 6 rows tall, and at the stage's
-// ~478x328 viewport a scale much above ~1.15 pushes the tall board past the
-// stage's height, cropping the very row the step is trying to show.
-const CAM = { center: .82, board: 1.12, key: 3, panel: 1.25 };
+// Close-up camera framing: computed per-target (see camFocus) from the
+// element's actual mock-local box rather than a hand-tuned scale constant
+// per subject — a fixed scale tuned against one card's size crops the next
+// one that happens to render taller/wider (the bug this replaced: the
+// right-panel and past-answers close-ups clipped their card edges).
+const CAM_PAD = 18;        // min on-screen padding (px) kept on every side
+const CAM_MAX_SCALE = 3.2; // zoom ceiling so a tiny target (e.g. one key) doesn't
+                            // fill the whole stage with no context around it
+// Cursor's resting spot between actions: the mock's own outer padding
+// gutter (top-right corner), which never sits under any card's text, so the
+// pointer never starts — or idles — on top of a label.
+const CURSOR_PARK = { x: 848, y: 26 };
 
 // ---- module state -------------------------------------------------------
 let helpDemoEl = null;    // #help-demo wrapper (fades between loop iterations)
@@ -244,6 +251,19 @@ function localCenter(scene, el) {
     y: (er.top - mr.top) / s + (er.height / s) / 2,
   };
 }
+// Right-edge anchor of `el` (e.g. a board row), offset outward by `off` px —
+// mirrors where the real .row-remove button sits, outside the row's own
+// bounds, so the cursor/× control it drives never lands on top of the row's
+// own text.
+function localEdgeRight(scene, el, off = 22) {
+  const mr = scene.mock.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  const s = scene.camera.scale || 1;
+  return {
+    x: (er.right - mr.left) / s + off,
+    y: (er.top - mr.top) / s + (er.height / s) / 2,
+  };
+}
 function setCamera(scene, cx, cy, scale) {
   const sw = scene.stage.clientWidth, sh = scene.stage.clientHeight;
   const tx = sw / 2 - cx * scale, ty = sh / 2 - cy * scale;
@@ -257,8 +277,16 @@ function camWide(scene) {
   const scale = Math.min(sw / mw, sh / mh) * 0.94;
   setCamera(scene, mw / 2, mh / 2, scale);
 }
-// Close-up: centers on `el` at `scale`.
-function camFocus(scene, el, scale) {
+// Close-up: centers on `el`, at the largest scale that still leaves
+// CAM_PAD px of margin on every side (capped at CAM_MAX_SCALE). Computing
+// the scale from the target's own current box — rather than a per-subject
+// hand-tuned constant — means a close-up can never crop the very card/row
+// it's framing, no matter how tall or wide that element's content is.
+function camFocus(scene, el, maxScale = CAM_MAX_SCALE) {
+  const sw = scene.stage.clientWidth, sh = scene.stage.clientHeight;
+  const ew = el.offsetWidth || 1, eh = el.offsetHeight || 1;
+  const fit = Math.min((sw - CAM_PAD * 2) / ew, (sh - CAM_PAD * 2) / eh);
+  const scale = Math.min(maxScale, fit);
   const { x, y } = localCenter(scene, el);
   setCamera(scene, x, y, scale);
 }
@@ -266,17 +294,21 @@ function camFocus(scene, el, scale) {
 // ---- cursor: pointer glides + taps ripple/squash --------------------------
 function showPointer(scene) { scene.pointer.classList.add('show'); }
 function hidePointer(scene) { scene.pointer.classList.remove('show'); }
+function pointerTo(scene, x, y) { scene.pointer.style.transform = `translate(${x}px, ${y}px)`; }
 function moveTo(scene, target) {
   const { x, y } = localCenter(scene, target);
-  scene.pointer.style.transform = `translate(${x}px, ${y}px)`;
+  pointerTo(scene, x, y);
 }
-function tapAt(scene, target) {
-  const { x, y } = localCenter(scene, target);
+function rippleAt(scene, x, y, squashTarget) {
   scene.pointer.classList.remove('tap'); void scene.pointer.offsetWidth; scene.pointer.classList.add('tap');
   scene.ripple.style.setProperty('--tx', `${x}px`);
   scene.ripple.style.setProperty('--ty', `${y}px`);
   scene.ripple.classList.remove('go'); void scene.ripple.offsetWidth; scene.ripple.classList.add('go');
-  squash(target);
+  if (squashTarget) squash(squashTarget);
+}
+function tapAt(scene, target) {
+  const { x, y } = localCenter(scene, target);
+  rippleAt(scene, x, y, target);
 }
 function showChip(scene, text, target) {
   const { x, y } = localCenter(scene, target);
@@ -332,6 +364,7 @@ function buildSolverScene() {
   right.appendChild(rightCard);
 
   const pointer = document.createElement('span'); pointer.className = 'hd-pointer';
+  pointer.style.transform = `translate(${CURSOR_PARK.x}px, ${CURSOR_PARK.y}px)`;
   const ripple = document.createElement('span'); ripple.className = 'hd-ripple';
   const chip = document.createElement('span'); chip.className = 'hd-chip';
   mock.append(left, center, right, pointer, ripple, chip);
@@ -426,6 +459,7 @@ function buildPracticeScene() {
   right.append(hintCard, statsCard);
 
   const pointer = document.createElement('span'); pointer.className = 'hd-pointer';
+  pointer.style.transform = `translate(${CURSOR_PARK.x}px, ${CURSOR_PARK.y}px)`;
   const ripple = document.createElement('span'); ripple.className = 'hd-ripple';
   const chip = document.createElement('span'); chip.className = 'hd-chip';
   mock.append(left, center, right, pointer, ripple, chip);
@@ -455,7 +489,7 @@ const TOURS = {
     {
       caption: 'Type the guess you played in Wordle.',
       async run(scene, ctx) {
-        camFocus(scene, scene.cols.center, CAM.center);
+        camFocus(scene, scene.cols.center);
         await ctx.wait(CAM_MS);
         const tiles = scene.rows[0].tiles;
         for (let i = 0; i < 5; i++) {
@@ -470,7 +504,7 @@ const TOURS = {
     {
       caption: 'Tap tiles to set the colors Wordle gave you.',
       async run(scene, ctx) {
-        camFocus(scene, scene.boardEl, CAM.board);
+        camFocus(scene, scene.boardEl);
         await ctx.wait(CAM_MS);
         const tiles = scene.rows[0].tiles;
         showPointer(scene);
@@ -494,7 +528,7 @@ const TOURS = {
     {
       caption: 'Gray means the letter isn’t in the word.',
       async run(scene, ctx) {
-        camFocus(scene, scene.boardEl, CAM.board);
+        camFocus(scene, scene.boardEl);
         await ctx.wait(CAM_MS);
         const tiles = scene.rows[0].tiles;
         paintTile(tiles, 0, 'n', SOLVER_WORD[0]);
@@ -508,7 +542,7 @@ const TOURS = {
     {
       caption: 'Press Enter to submit.',
       async run(scene, ctx) {
-        camFocus(scene, scene.enterKey, CAM.key);
+        camFocus(scene, scene.enterKey);
         await ctx.wait(CAM_MS);
         pressKey(scene.enterKey);
         await ctx.wait(260);
@@ -519,7 +553,7 @@ const TOURS = {
     {
       caption: 'The suggestions panel shows the best next guess.',
       async run(scene, ctx) {
-        camFocus(scene, scene.rightCard, CAM.panel);
+        camFocus(scene, scene.rightCard);
         await ctx.wait(CAM_MS);
         scene.count.classList.add('show');
         await ctx.tick(scene.count, COUNT_FROM, COUNT_TO, 700);
@@ -530,45 +564,48 @@ const TOURS = {
     {
       caption: 'See all remaining words anytime.',
       async run(scene, ctx) {
-        camFocus(scene, scene.rightCard, CAM.panel);
+        camFocus(scene, scene.rightCard);
         await ctx.wait(300);
         SUGGESTIONS.forEach((w, i) => addWordRow(scene.wordRowsEl, w, SUGGESTION_WEIGHTS[i], i * 90));
         await ctx.wait(1600);
       },
     },
     {
-      caption: 'Past answers are listed here — today’s word is never an old one.',
+      caption: "Past answers — every previous day's Wordle solution. Today's word never repeats, so these are ruled out.",
       async run(scene, ctx) {
-        camFocus(scene, scene.leftCard, CAM.panel);
+        camFocus(scene, scene.leftCard);
         await ctx.wait(CAM_MS);
         PAST_ANSWERS.forEach((p, i) => addPastRow(scene.past, p.date, p.word, i * 70));
         await ctx.wait(1500);
       },
     },
     {
-      caption: 'Made a mistake? Hover a row and hit × to remove it.',
+      caption: 'Made a mistake? Hover a guess and hit × to remove it.',
       async run(scene, ctx) {
-        camFocus(scene, scene.leftCard, CAM.panel);
-        await ctx.wait(300);
-        const row = scene.past.children[1] || scene.past.children[0];
-        if (!row) { await ctx.wait(1600); return; }
-        row.classList.add('hd-x');
-        const x = document.createElement('span');
-        x.className = 'hd-x-mark';
-        x.textContent = '×';
-        row.appendChild(x);
+        // This demos removing a *guess row on the board* — that's what the
+        // real ×-on-hover control actually does (see .row-remove in
+        // components.css); the past-answers list has no per-row remove.
+        camFocus(scene, scene.boardEl);
+        await ctx.wait(CAM_MS);
+        const row = scene.rows[0];
+        const { x, y } = localEdgeRight(scene, row.el);
+        const xMark = document.createElement('span');
+        xMark.className = 'hd-x-mark';
+        xMark.textContent = '×';
+        xMark.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+        scene.mock.appendChild(xMark);
         showPointer(scene);
-        moveTo(scene, row);
+        pointerTo(scene, x, y);
         await ctx.wait(500);
-        x.classList.add('show');
+        xMark.classList.add('show');
         await ctx.wait(500);
-        tapAt(scene, row);
-        row.classList.add('hd-exit');
+        rippleAt(scene, x, y, row.el);
+        row.el.classList.add('hd-exit');
         hidePointer(scene);
         await ctx.wait(450);
-        row.remove();
-        await ctx.tick(scene.count, COUNT_TO, COUNT_TO + 5, 450);
-        await ctx.wait(350);
+        row.el.remove();
+        xMark.remove();
+        await ctx.wait(500);
       },
     },
     {
@@ -601,7 +638,7 @@ const TOURS = {
     {
       caption: 'We pick a secret word — colors fill in automatically.',
       async run(scene, ctx) {
-        camFocus(scene, scene.cols.center, CAM.center);
+        camFocus(scene, scene.cols.center);
         await ctx.wait(CAM_MS);
         scene.rows[0].el.classList.remove('pulsing');
         const tiles = scene.rows[0].tiles;
@@ -615,7 +652,7 @@ const TOURS = {
     {
       caption: 'Green = right spot, yellow = wrong spot, gray = not in the word.',
       async run(scene, ctx) {
-        camFocus(scene, scene.boardEl, CAM.board);
+        camFocus(scene, scene.boardEl);
         await ctx.wait(CAM_MS);
         const tiles = scene.rows[0].tiles;
         pulseTile(tiles[2]); showChip(scene, 'green = right spot', tiles[2]);
@@ -630,7 +667,7 @@ const TOURS = {
     {
       caption: 'Stuck? The hint shares a letter with the answer.',
       async run(scene, ctx) {
-        camFocus(scene, scene.hintCard, CAM.panel);
+        camFocus(scene, scene.hintCard);
         await ctx.wait(CAM_MS);
         scene.cover.classList.add('hd-wiped');
         await ctx.wait(1400);
@@ -639,7 +676,7 @@ const TOURS = {
     {
       caption: 'Your stats grow with every game.',
       async run(scene, ctx) {
-        camFocus(scene, scene.statsCard, CAM.panel);
+        camFocus(scene, scene.statsCard);
         await ctx.wait(CAM_MS);
         for (const bar of scene.statBars) { bar.classList.add('fill'); await ctx.wait(180); }
         await ctx.wait(1200);
@@ -648,7 +685,7 @@ const TOURS = {
     {
       caption: 'Pick any day from the calendar to replay that Wordle.',
       async run(scene, ctx) {
-        camFocus(scene, scene.leftCard, CAM.panel);
+        camFocus(scene, scene.leftCard);
         await ctx.wait(CAM_MS);
         const day = scene.calDays[CAL_PICK];
         showPointer(scene);
@@ -665,7 +702,7 @@ const TOURS = {
     {
       caption: 'Refresh the page for a fresh random word.',
       async run(scene, ctx) {
-        camFocus(scene, scene.cols.center, CAM.center);
+        camFocus(scene, scene.cols.center);
         await ctx.wait(CAM_MS);
         scene.refresh.classList.add('show');
         scene.refresh.classList.remove('spin');

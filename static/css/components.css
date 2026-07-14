@@ -132,11 +132,14 @@ html[data-skin="signal"][data-theme="dark"] .hero-word {
 .word-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 6px; flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: 10px; padding: 2px;
   align-content: start; }
-.word-list .srow { display: flex; flex-direction: column; gap: 3px; padding: 6px 8px;
-  background: var(--line); border-radius: calc(var(--radius-key)); font-size: .8rem;
-  font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.word-list .bar { height: 3px; border-radius: 99px; background: var(--bg); overflow: hidden; }
-.word-list .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+/* real word-list rows: same bar-chart treatment as the how-to-play mock's
+   .hd-word-row — the green fill IS the row background (a muted tile-green
+   layer under the label), not a separate underline meter */
+.word-list .srow { position: relative; height: 30px; border-radius: var(--radius-key);
+  background: var(--line); overflow: hidden; display: flex; align-items: center; }
+.word-list .srow-fill { position: absolute; inset: 0 auto 0 0; background: var(--tile-green); opacity: .4; }
+.word-list .srow-text { position: relative; z-index: 1; padding-left: 10px; line-height: 1;
+  font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
 .list-caption { font-size: .68rem; color: var(--muted); margin-top: 8px; }
 
 #banner { width: fit-content; max-width: min(420px, 92vw); margin: 0 auto;
@@ -438,9 +441,19 @@ html[data-mode="solver"] #stats-content { display: none; }
 .hd-mini-word { font-size: .82rem; color: var(--ink); font-weight: 800; letter-spacing: .05em; }
 .hd-mini-row.hd-exit { animation: hdRowOut var(--dur-tile) var(--ease-pop) forwards; }
 @keyframes hdRowOut { to { opacity: 0; transform: translateX(-16px); } }
-.hd-mini-row .hd-x-mark { position: absolute; right: 8px; top: 50%; transform: translate(0, -50%) scale(0);
-  font-size: 14px; line-height: 1; color: var(--muted); transition: transform var(--dur-fast) var(--ease-pop); }
-.hd-mini-row .hd-x-mark.show { transform: translate(0, -50%) scale(1); }
+/* board row removal (row-removal tour step): the committed guess row slides
+   out the same way a past-answers row does, reusing hdRowOut */
+.hd-brow.hd-exit { animation: hdRowOut var(--dur-tile) var(--ease-pop) forwards; }
+/* floating "remove this guess" control for that step — a mock-level element
+   (sibling of the cursor/chip, not nested inside the row) positioned via
+   translate() at the row's outer edge, mirroring where the real
+   .row-remove button sits, outside the row's own bounds */
+.hd-x-mark { position: absolute; left: 0; top: 0; opacity: 0;
+  width: 20px; height: 20px; border-radius: 50%; background: var(--bg-modal);
+  border: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity var(--dur-fast) var(--ease-pop); pointer-events: none; z-index: 6; }
+.hd-x-mark.show { opacity: 1; }
 
 /* suggestions card: hero word, "N words left" chip, and 4 ranked word rows
    each with a green confidence bar (scaleX only) behind the word text */

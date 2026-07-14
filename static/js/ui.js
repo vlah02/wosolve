@@ -174,7 +174,7 @@ export function renderSuggestions({ top, count, scores, revealed }) {
          <button class="count-chip js-toggle-list">${count} word${count === 1 ? '' : 's'} left · see all</button>
          <div class="list-caption" hidden>Fuller bar = guess that narrows the list more</div>
          <div class="word-list" hidden>
-           ${top.map((w, i) => `<div class="srow">${w}<span class="bar" title="How much this guess narrows the remaining words"><i style="width:${scores[i]}%"></i></span></div>`).join('')}
+           ${top.map((w, i) => `<div class="srow" title="How much this guess narrows the remaining words"><span class="srow-fill" style="width:${scores[i]}%"></span><span class="srow-text">${w}</span></div>`).join('')}
          </div>
        </div>`;
   const sideTarget = $('#side-suggest');
