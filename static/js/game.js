@@ -50,6 +50,11 @@ function playedMap() {
 
 let entry = { letters: '', marks: '' };
 let practiceTileInfoShown = false; // one-time-per-session nudge
+// Whether the practice-mode hint word has been unblurred by the player for
+// the CURRENT secret — reset whenever a new secret is picked (new random
+// game, a dated replay, or "play again") so re-renders triggered by typing
+// don't re-blur an already-revealed hint (and a fresh game starts blurred).
+let hintRevealed = false;
 
 export function initGame(wordLists, initUI_) {
   lists = wordLists;
@@ -69,7 +74,7 @@ export function initGame(wordLists, initUI_) {
   }
   document.documentElement.dataset.mode = state.mode;
   document.dispatchEvent(new CustomEvent('wosolve:mode-changed', { detail: { mode: state.mode } }));
-  initUI_({ onKey, onCycle, onMark, onUndo, onRemoveRow });
+  initUI_({ onKey, onCycle, onMark, onUndo, onRemoveRow, onHintReveal });
   document.querySelectorAll('#mode-toggle button').forEach(b =>
     b.onclick = () => switchMode(b.dataset.mode));
   document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
@@ -120,7 +125,10 @@ function newPracticeGame() {
   state.practice = {
     secret: lists.answers[Math.floor(Math.random() * lists.answers.length)],
     rows: [], done: false, dateLabel: null };
+  hintRevealed = false;
 }
+
+function onHintReveal() { hintRevealed = true; }
 
 function initPracticeControls() {
   const container = document.getElementById('play-day-calendar');
@@ -144,6 +152,7 @@ function onPlayDate(dateStr) {
   }
   state.practice = { secret: word, rows: [], done: false, dateLabel: dateStr };
   entry = { letters: '', marks: '' };
+  hintRevealed = false;
   UI.showBanner(`Wordle from ${dateStr} — guess it in 6!`, 'info');
   save(); rerender();
   UI.animateBoardReset();
@@ -256,7 +265,7 @@ function rerender(opts = {}) {
       const sideTarget = document.getElementById('side-suggest');
       if (sideTarget) sideTarget.hidden = true;
     } else {
-      UI.renderSuggestions({ top: [hintFor()], count: -1, scores: [100] });
+      UI.renderSuggestions({ top: [hintFor()], count: -1, scores: [100], revealed: hintRevealed });
     }
   }
 }

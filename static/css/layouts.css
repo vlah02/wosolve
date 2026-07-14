@@ -3,13 +3,19 @@
    only the panel *content* changes with mode (solver vs practice), via the
    html[data-mode] rules below. */
 #layout-root { max-width: 1180px; margin: 20px auto 0; padding: 0 16px 30px;
-  display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 24px;
-  align-items: start; flex: 1;
+  display: grid; grid-template-columns: 300px minmax(0, 560px) 300px; gap: 48px;
+  justify-content: center; align-items: start; flex: 1;
   animation: rise var(--dur-tile) var(--ease-pop) backwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
+/* shared max-height constant (accounts for header height + top/bottom page
+   margins) so the left and right panel columns cap out at the same height;
+   the actual scrolling happens inside each card's list (see .scroll-list/
+   .word-list in components.css), not on this wrapper. */
 #panel-left, #panel-right { display: flex; flex-direction: column; gap: 14px;
-  max-height: calc(100vh - 140px); overflow: hidden auto; }
+  align-self: start; max-height: calc(100vh - 210px); overflow: hidden auto; }
+#panel-left > *, #panel-right > * { display: flex; flex-direction: column;
+  min-height: 0; flex: 1 1 auto; }
 
 #center-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 

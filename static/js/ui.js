@@ -28,7 +28,7 @@ export function initUI(callbacks) {
       return;
     }
     const blur = e.target.closest('.js-unblur');
-    if (blur) blur.classList.remove('blurred');
+    if (blur) { blur.classList.remove('blurred'); cb.onHintReveal?.(); }
   });
 }
 
@@ -157,7 +157,7 @@ function setFocus(i) {
     t.classList.toggle('focused', Number(t.dataset.idx) === i));
 }
 
-export function renderSuggestions({ top, count, scores }) {
+export function renderSuggestions({ top, count, scores, revealed }) {
   const html = count === 0
     ? `<div class="panel"><h5>Solver</h5>
          <p style="margin:6px 0">No words match — check your colors.</p>
@@ -165,7 +165,7 @@ export function renderSuggestions({ top, count, scores }) {
     : count === -1
     ? `<div class="panel">
          <h5>Hint</h5>
-         <div class="hero-word blurred js-unblur">${top[0] ?? ''}</div>
+         <div class="hero-word${revealed ? '' : ' blurred'} js-unblur">${top[0] ?? ''}</div>
        </div>`
     : `<div class="panel">
          <h5>Best next guess</h5>
