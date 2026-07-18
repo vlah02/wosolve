@@ -89,6 +89,7 @@ let staticCaptionsEl = null; // .hd-static-captions <ol> (reduced motion)
 let gen = 0;              // bumped on every start()/stop(); invalidates stale timers
 const timers = new Set();
 const rafIds = new Set();
+let resizeObs = null;     // re-frames the in-flight camera shot if the stage itself resizes
 
 class Canceled extends Error {}
 
@@ -264,30 +265,65 @@ function localEdgeRight(scene, el, off = 22) {
     y: (er.top - mr.top) / s + (er.height / s) / 2,
   };
 }
+// Always re-measured from the live DOM (never cached) so framing tracks
+// whatever size the stage is actually rendered at right now — the modal is
+// `width: min(92vw, 560px)`, so at narrower windows the stage (`max-width:
+// 100%`) can render smaller than its 480x330 default, and a scale computed
+// against stale/constant dimensions would center on the wrong point and let
+// close-ups clip. clientWidth/clientHeight already exclude the 1px border
+// (matching `.hd-mock`'s `top:0;left:0` positioning origin), so this is the
+// live equivalent of getBoundingClientRect() for this box.
+function stageBox(scene) {
+  return { w: scene.stage.clientWidth, h: scene.stage.clientHeight };
+}
 function setCamera(scene, cx, cy, scale) {
-  const sw = scene.stage.clientWidth, sh = scene.stage.clientHeight;
+  const { w: sw, h: sh } = stageBox(scene);
   const tx = sw / 2 - cx * scale, ty = sh / 2 - cy * scale;
   scene.mock.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
   scene.camera = { x: cx, y: cy, scale };
 }
+// Which top-level mock column (`scene.cols.left/center/right`) an element
+// lives under, if any.
+function colOf(scene, el) {
+  const cols = scene.cols || {};
+  return Object.values(cols).find(col => col && col.contains(el)) || null;
+}
+// Aesthetic guard for close-ups: a target's aspect ratio rarely matches the
+// stage's, so the fit computed by camFocus below can leave slack on one
+// axis even while the *other* axis is framed tight — and that slack shows
+// an undimmed sliver of whatever sits next to the target in the mock (e.g.
+// a stray board tile or keyboard key poking into a side-panel close-up).
+// Dimming every top-level column except the one holding the current target
+// keeps every close-up free of that clutter; the wide shot (keepCol=null)
+// clears it so the establishing shot reads at full strength everywhere.
+function setNeighborDim(scene, keepCol) {
+  Object.values(scene.cols || {}).forEach(col => {
+    if (col) col.classList.toggle('hd-dim', !!keepCol && col !== keepCol);
+  });
+}
 // Establishing shot: the whole mock, letterboxed to fit the stage.
 function camWide(scene) {
-  const sw = scene.stage.clientWidth, sh = scene.stage.clientHeight;
+  scene.lastFocus = { wide: true };
+  const { w: sw, h: sh } = stageBox(scene);
   const mw = scene.mock.offsetWidth, mh = scene.mock.offsetHeight;
   const scale = Math.min(sw / mw, sh / mh) * 0.94;
+  setNeighborDim(scene, null);
   setCamera(scene, mw / 2, mh / 2, scale);
 }
 // Close-up: centers on `el`, at the largest scale that still leaves
 // CAM_PAD px of margin on every side (capped at CAM_MAX_SCALE). Computing
-// the scale from the target's own current box — rather than a per-subject
-// hand-tuned constant — means a close-up can never crop the very card/row
-// it's framing, no matter how tall or wide that element's content is.
+// the scale from the target's own current box and the stage's own current
+// box — rather than hand-tuned constants for either — means a close-up can
+// never crop the very card/row it's framing, no matter how tall or wide
+// that element's content is or how small the stage has been squeezed.
 function camFocus(scene, el, maxScale = CAM_MAX_SCALE) {
-  const sw = scene.stage.clientWidth, sh = scene.stage.clientHeight;
+  scene.lastFocus = { wide: false, el, maxScale };
+  const { w: sw, h: sh } = stageBox(scene);
   const ew = el.offsetWidth || 1, eh = el.offsetHeight || 1;
   const fit = Math.min((sw - CAM_PAD * 2) / ew, (sh - CAM_PAD * 2) / eh);
   const scale = Math.min(maxScale, fit);
   const { x, y } = localCenter(scene, el);
+  setNeighborDim(scene, colOf(scene, el));
   setCamera(scene, x, y, scale);
 }
 
@@ -321,10 +357,26 @@ function hideChip(scene) { scene.chip.classList.remove('show'); }
 // ---- scene builders -------------------------------------------------------
 
 function mountStage() {
+  if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
   stageEl.innerHTML = '';
   stageEl.classList.remove('hd-mount');
   void stageEl.offsetWidth;
   stageEl.classList.add('hd-mount', 'hd-stage');
+}
+// Re-frames whatever the camera is currently showing (wide or a close-up)
+// whenever the stage's own rendered size changes — e.g. the user resizes
+// the window, or a narrow layout reflows, mid-tour. Without this the camera
+// transform would keep targeting the stage size it was computed against at
+// the *start* of the current step, going stale (and clipping/off-centering)
+// the moment the viewport no longer matches it.
+function attachResizeReframe(scene) {
+  if (typeof ResizeObserver === 'undefined') return;
+  resizeObs = new ResizeObserver(() => {
+    if (!scene.lastFocus) return;
+    if (scene.lastFocus.wide) camWide(scene);
+    else camFocus(scene, scene.lastFocus.el, scene.lastFocus.maxScale);
+  });
+  resizeObs.observe(scene.stage);
 }
 
 function buildSolverScene() {
@@ -341,6 +393,12 @@ function buildSolverScene() {
   past.className = 'hd-mini-list';
   leftCard.appendChild(past);
   left.appendChild(leftCard);
+  // Populated right away — not gated behind the "Past answers" step — so
+  // every shot, including the very first wide establishing shot, mirrors
+  // the real page's always-visible list instead of a blank card. The
+  // dedicated step later just spotlights these rows (a pulse), it doesn't
+  // create them.
+  PAST_ANSWERS.forEach(p => addPastRow(past, p.date, p.word, 0));
 
   const center = document.createElement('div');
   center.className = 'hd-col hd-center';
@@ -354,14 +412,21 @@ function buildSolverScene() {
   rightCard.className = 'hd-card';
   rightCard.innerHTML = '<div class="hd-card-label">Best next guess</div>';
   const hero = document.createElement('div');
-  hero.className = 'hd-hero';
+  hero.className = 'hd-hero show';
   hero.textContent = HERO_WORD;
   const count = document.createElement('div');
-  count.className = 'hd-count-chip';
+  count.className = 'hd-count-chip show';
+  count.textContent = `${COUNT_FROM.toLocaleString()} words left`;
   const wordRowsEl = document.createElement('div');
   wordRowsEl.className = 'hd-word-rows';
   rightCard.append(hero, count, wordRowsEl);
   right.appendChild(rightCard);
+  // Same as the past-answers list above: the hero pick, count chip, and
+  // ranked word rows are all real content from the first frame — the
+  // COUNT_FROM starting number mirrors the real page's pre-guess word
+  // count, and the "best next guess" step later ticks it down to
+  // COUNT_TO (and pulses the rows) rather than materializing them.
+  SUGGESTIONS.forEach((w, i) => addWordRow(wordRowsEl, w, SUGGESTION_WEIGHTS[i], 0).classList.add('show'));
 
   const pointer = document.createElement('span'); pointer.className = 'hd-pointer';
   pointer.style.transform = `translate(${CURSOR_PARK.x}px, ${CURSOR_PARK.y}px)`;
@@ -370,14 +435,16 @@ function buildSolverScene() {
   mock.append(left, center, right, pointer, ripple, chip);
   stageEl.appendChild(mock);
 
-  return {
-    stage: stageEl, mock, camera: { x: 0, y: 0, scale: 1 },
+  const scene = {
+    stage: stageEl, mock, camera: { x: 0, y: 0, scale: 1 }, lastFocus: null,
     cols: { left, center, right },
     boardEl, kbEl, rows, keys, enterKey,
     past, wordRowsEl, count, hero,
     leftCard, rightCard,
     pointer, ripple, chip,
   };
+  attachResizeReframe(scene);
+  return scene;
 }
 
 function buildPracticeScene() {
@@ -465,13 +532,15 @@ function buildPracticeScene() {
   mock.append(left, center, right, pointer, ripple, chip);
   stageEl.appendChild(mock);
 
-  return {
-    stage: stageEl, mock, camera: { x: 0, y: 0, scale: 1 },
+  const scene = {
+    stage: stageEl, mock, camera: { x: 0, y: 0, scale: 1 }, lastFocus: null,
     cols: { left, center, right },
     boardEl, kbEl, rows, cal, calDays, hero, cover, statBars, refresh,
     hintCard, statsCard, leftCard,
     pointer, ripple, chip,
   };
+  attachResizeReframe(scene);
+  return scene;
 }
 
 // ---- tour scripts ---------------------------------------------------------
@@ -551,13 +620,16 @@ const TOURS = {
       },
     },
     {
+      // The hero/count/rows are already on screen (populated at scene build,
+      // see buildSolverScene) — this step re-emphasizes them: a pulse on the
+      // hero pick and the count ticking down, as if the earlier guess just
+      // narrowed the list, rather than materializing the panel from nothing.
       caption: 'The suggestions panel shows the best next guess.',
       async run(scene, ctx) {
         camFocus(scene, scene.rightCard);
         await ctx.wait(CAM_MS);
-        scene.count.classList.add('show');
+        pulseTile(scene.hero);
         await ctx.tick(scene.count, COUNT_FROM, COUNT_TO, 700);
-        scene.hero.classList.add('show');
         await ctx.wait(1200);
       },
     },
@@ -566,8 +638,9 @@ const TOURS = {
       async run(scene, ctx) {
         camFocus(scene, scene.rightCard);
         await ctx.wait(300);
-        SUGGESTIONS.forEach((w, i) => addWordRow(scene.wordRowsEl, w, SUGGESTION_WEIGHTS[i], i * 90));
-        await ctx.wait(1600);
+        const rows = Array.from(scene.wordRowsEl.children);
+        for (const row of rows) { pulseTile(row); await ctx.wait(90); }
+        await ctx.wait(900);
       },
     },
     {
@@ -575,8 +648,9 @@ const TOURS = {
       async run(scene, ctx) {
         camFocus(scene, scene.leftCard);
         await ctx.wait(CAM_MS);
-        PAST_ANSWERS.forEach((p, i) => addPastRow(scene.past, p.date, p.word, i * 70));
-        await ctx.wait(1500);
+        const rows = Array.from(scene.past.children);
+        for (const row of rows) { pulseTile(row); await ctx.wait(70); }
+        await ctx.wait(900);
       },
     },
     {
@@ -795,14 +869,10 @@ function showStatic(mode) {
     tiles[3].className = 'hd-tile g';
     tiles[4].className = 'hd-tile pending';
     scene.rows[0].el.classList.add('committed');
-    scene.count.classList.add('show');
+    // hero/count/word-rows/past-answers are already populated & shown by
+    // buildSolverScene — just settle the count on its final value instead of
+    // the tour's animated starting number.
     scene.count.textContent = `${COUNT_TO.toLocaleString()} words left`;
-    scene.hero.classList.add('show');
-    SUGGESTIONS.forEach((w, i) => {
-      addWordRow(scene.wordRowsEl, w, SUGGESTION_WEIGHTS[i], 0);
-      scene.wordRowsEl.lastChild.classList.add('show');
-    });
-    PAST_ANSWERS.forEach((p, i) => addPastRow(scene.past, p.date, p.word, 0));
   }
   if (staticCaptionsEl) {
     staticCaptionsEl.innerHTML = tour.map(s => `<li>${s.caption}</li>`).join('');
@@ -817,6 +887,7 @@ function stop() {
   timers.clear();
   rafIds.forEach(id => cancelAnimationFrame(id));
   rafIds.clear();
+  if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
 }
 
 function start() {

@@ -361,9 +361,19 @@ html[data-mode="solver"] #stats-content { display: none; }
   transition: transform .8s cubic-bezier(.4, 0, .2, 1); will-change: transform; }
 @media (prefers-reduced-motion: reduce) { .hd-mock { transition: none; } }
 
-.hd-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.hd-col { display: flex; flex-direction: column; gap: 16px; min-width: 0;
+  opacity: 1; transition: opacity var(--dur-tile) ease; }
 .hd-left, .hd-right { flex: 0 0 210px; }
 .hd-center { flex: 1 1 auto; align-items: center; justify-content: flex-start; gap: 26px; padding-top: 6px; }
+/* Close-up guard: a target's aspect ratio rarely matches the stage's, so
+   camFocus's fit-to-target scale can leave slack on the *other* axis even
+   while the target itself is framed tight — that slack used to show an
+   undimmed sliver of whatever column sits next to the target (a stray
+   board tile, a keyboard key) at the edge of the shot. Dimming every
+   top-level column except the one holding the current target (set/cleared
+   by camFocus/camWide in helpdemo.js) keeps every close-up free of that
+   clutter without touching layout. */
+.hd-col.hd-dim { opacity: .25; }
 
 .hd-card { background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-panel);
   padding: 18px; display: flex; flex-direction: column; gap: 12px; }
