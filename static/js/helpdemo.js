@@ -611,7 +611,7 @@ const TOURS = {
     {
       caption: 'Press Enter to submit.',
       async run(scene, ctx) {
-        camFocus(scene, scene.enterKey);
+        camFocus(scene, scene.kbEl);
         await ctx.wait(CAM_MS);
         pressKey(scene.enterKey);
         await ctx.wait(260);
