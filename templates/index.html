@@ -1,171 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="arcade">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WoSoLve</title>
   <link rel="icon" href="{{ url_for('static', filename='images/icon.png') }}" type="image/png">
   <script src="{{ url_for('static', filename='vendor/tailwind-3.4.16.js') }}"></script>
-  <script>tailwind.config = { darkMode: ['class', '.dark-mode'] };</script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
-        integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk"
-        crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layouts.css') }}">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col items-center">
-
-  
-  <div class="theme-toggle absolute top-4 right-4 z-50">
-    <button id="theme-toggle" class="text-gray-500 dark:text-gray-300 focus:outline-none">
-      <i id="theme-icon" class="fas fa-moon"></i>
-    </button>
-  </div>
-
-  
-  <div class="w-full flex justify-center mt-4">
-    <img id="logo"
-         src="{{ url_for('static', filename='images/wosolve.png') }}"
-         alt="Logo"
-         class="w-64 md:w-72 lg:w-80">
-  </div>
-
-  
-  <div class="flex-grow flex items-center justify-center mt-4 mb-14 px-4">
-    <div class="w-full max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-visible">
-      <div class="p-6">
-
-        
-        <form id="guessForm" method="post" class="flex flex-col items-center">
-          <div class="flex items-center mb-1">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-3 select-none">
-              Enter your guess:
-            </label>
-            <div id="guessContainer" class="flex">
-              <div class="placeholder-box"></div>
-              <div class="placeholder-box"></div>
-              <div class="placeholder-box"></div>
-              <div class="placeholder-box"></div>
-              <div class="placeholder-box"></div>
-            </div>
-            <input type="hidden" name="guess" id="hiddenGuess">
-          </div>
-          <div class="flex items-center mb-4">
-            <div class="custom-checkbox-container flex items-center">
-              <div class="custom-checkbox" id="customCheckbox"></div>
-              <input type="checkbox"
-                     name="includeExtended"
-                     id="includeExtended"
-                     class="hidden"
-                     {% if include_extended %}checked{% endif %}>
-              <label for="includeExtended"
-                     class="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2 select-none">
-                Include extended word list
-              </label>
-            </div>
-          </div>
-        </form>
-
-        
-        <div id="keyboard" class="space-y-2">
-          <div class="flex justify-center gap-2">
-            {% for k in "QWERTYUIOP" %}
-              <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
-            {% endfor %}
-          </div>
-          <div class="flex justify-center gap-2">
-            {% for k in "ASDFGHJKL" %}
-              <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
-            {% endfor %}
-          </div>
-          <div class="flex justify-center gap-2">
-            <div class="submit-button-container">
-              <button type="submit" form="guessForm"
-                      class="bg-indigo-600 text-white button hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
-                <i class="fas fa-check"></i>
-              </button>
-              {% if suggested_word %}
-                <div class="random-word-tooltip">
-                  Suggested word: {{ suggested_word }}
-                </div>
-              {% endif %}
-            </div>
-            {% for k in "ZXCVBNM" %}
-              <button class="key" data-key="{{ k|lower }}">{{ k }}</button>
-            {% endfor %}
-            <div class="submit-button-container">
-              <button class="key" id="backspace-key">⌫</button>
-            </div>
-          </div>
-          <div class="flex justify-center mt-4">
-            <button type="button"
-                    onclick="window.location.href='/reset'"
-                    class="bg-red-600 text-white button hover:bg-red-700 focus:outline-none focus:bg-red-700">
-              <i class="fas fa-redo"></i>
-            </button>
-          </div>
-        </div>
-
-        
-        <div id="colorPopup" class="color-popup">
-          <button onclick="addColorToInput('+')" class="color-button bg-green-500"><i class="fas fa-check"></i></button>
-          <button onclick="addColorToInput('*')" class="color-button bg-yellow-500"><i class="fas fa-question"></i></button>
-          <button onclick="addColorToInput('-')" class="color-button bg-red-500"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="errorPopup" class="error-popup">ERROR: Incorrect format!</div>
-
-        
-        {% if words %}
-          <ul class="mt-4 results-container">
-            {% for word in words %}
-              <li>{{ word }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div id="logo" aria-label="WoSolve"></div>
+      <div id="mode-toggle" role="tablist">
+        <button data-mode="solver" class="on" role="tab">Solver</button>
+        <button data-mode="practice" role="tab">Practice</button>
       </div>
-    </div>
-  </div>
-
-  
-  <div class="footer-text no-select">
-    <span id="howToPlay" class="cursor-pointer">How to play?</span>
-  </div>
-
-  
-  <img id="movingGif"
-       class="moving-gif"
-       src="{{ url_for('static', filename='images/dog.gif') }}"
-       alt="Moving GIF">
-
-  <div
-    id="history"
-    class="fixed right-8 top-1/2 transform -translate-y-1/2 flex-shrink-0 w-64 h-96 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-y-auto space-y-2 z-50">
-    <h3 class="text-3xl font-semibold text-black dark:text-white text-center mt-2 mb-4">
-      History
-    </h3>
-
-    {% for guess in history %}
-        <div class="flex justify-start space-x-2">
-          {% for i in range(0,10,2) %}
-            {% set L   = guess[i].upper() %}
-            {% set sym = guess[i+1] %}
-            {% if sym == '+' %}
-              {% set color = 'bg-green-500 text-white' %}
-            {% elif sym == '*' %}
-              {% set color = 'bg-yellow-500 text-white' %}
-            {% else %}
-              {% set color = 'bg-red-500 text-white' %}
-            {% endif %}
-            <div class="{{ color }}
-                        w-10 h-10 flex items-center justify-center
-                        rounded-md text-lg font-bold">
-              {{ L }}
-            </div>
-          {% endfor %}
+      <div id="top-actions">
+        <button id="help-btn" title="How to play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.2-3 4"/>
+            <path d="M12 17.5h.01"/>
+          </svg>
+        </button>
+        <button id="settings-btn" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+    <main id="layout-root">
+      <aside id="panel-left">
+        <div id="past-panel" class="panel">
+          <h5 class="section-label">Past answers</h5>
+          <div id="past-list" class="scroll-list"></div>
         </div>
-      {% endfor %}
+        <div id="play-day" class="panel">
+          <h5 class="section-label">Play a day</h5>
+          <div id="play-day-calendar"></div>
+          <h5 class="section-label recent-label">Recently played</h5>
+          <div id="recent-list" class="scroll-list"></div>
+        </div>
+      </aside>
+      <section id="center-col">
+        <div id="banner" hidden></div>
+        <div id="board"></div>
+        <p id="practice-refresh-note" class="practice-refresh-note">Refresh the page for a new random word.</p>
+        <div id="keyboard"></div>
+      </section>
+      <aside id="panel-right">
+        <div id="side-suggest"></div>
+        <div id="stats-content"></div>
+      </aside>
+    </main>
   </div>
-
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <dialog id="settings-modal">
+    <div class="dialog-body">
+    <h3>Settings</h3>
+    <div class="set-group"><h5>Skin</h5>
+      <div class="swatches" data-setting="skin" role="radiogroup" aria-label="Skin">
+        <button data-value="board"><span class="sw sw-board"></span>Board</button>
+        <button data-value="signal"><span class="sw sw-signal"></span>Signal</button>
+        <button data-value="arcade"><span class="sw sw-arcade"></span>Arcade</button>
+      </div></div>
+    <div class="set-group"><h5>Theme</h5>
+      <div class="swatches" data-setting="theme" role="radiogroup" aria-label="Theme">
+        <button data-value="light">Light</button>
+        <button data-value="dark">Dark</button>
+        <button data-value="system">System</button>
+      </div></div>
+    <div class="set-group"><h5>Words</h5>
+      <label class="set-check"><input type="checkbox" id="set-extended"><span class="checkbox-box" aria-hidden="true"></span> Include extended word list</label>
+    </div>
+    <button class="close-modal">Done</button>
+    </div>
+  </dialog>
+  <dialog id="help-modal">
+    <div class="dialog-body">
+    <h3>How to play</h3>
+    <div id="help-demo" class="help-demo">
+      <div class="hd-stage" id="hd-stage"></div>
+      <p class="hd-caption" id="hd-caption"></p>
+      <div class="hd-dots" id="hd-dots"></div>
+      <ol class="hd-static-captions" hidden></ol>
+    </div>
+    <button class="close-modal">Close</button>
+    </div>
+  </dialog>
+  <dialog id="analysis-modal">
+    <div class="dialog-body">
+    <div id="analysis-content"></div>
+    <button class="close-modal">Close</button>
+    </div>
+  </dialog>
+  <img id="movingGif" class="moving-gif" src="{{ url_for('static', filename='images/dog.gif') }}" alt="">
+  <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

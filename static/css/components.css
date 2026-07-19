@@ -1,0 +1,619 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); min-height: 100vh;
+  display: flex; flex-direction: column;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+#app { display: flex; flex-direction: column; flex: 1; }
+#app, dialog { user-select: none; -webkit-user-select: none; }
+/* signal dark corner glow */
+html[data-skin="signal"][data-theme="dark"] body {
+  background: radial-gradient(120% 90% at 18% 0%, #1d2430 0%, var(--bg) 55%);
+}
+button { font-family: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.key:focus-visible { outline-color: var(--ink); }
+
+#topbar { display: flex; flex-direction: column; align-items: center;
+  gap: 12px; width: 100%; max-width: none; padding: 14px 24px; position: relative; }
+#top-actions { position: absolute; top: 14px; right: 24px; display: flex; gap: 6px; }
+#top-actions button { width: 34px; height: 34px; border: 1px solid var(--line);
+  background: var(--bg-raised); color: var(--muted); border-radius: var(--radius-key);
+  display: flex; align-items: center; justify-content: center;
+  transition: color var(--dur-fast), transform var(--dur-fast), border-color var(--dur-fast); }
+#top-actions button:hover { color: var(--ink); transform: translateY(-1px); border-color: var(--muted); }
+
+#mode-toggle { display: flex; background: var(--line); border-radius: 999px; padding: 3px; }
+#mode-toggle button { border: none; background: transparent; color: var(--muted);
+  font-weight: 700; font-size: .8rem; padding: 5px 14px; border-radius: 999px;
+  transition: all var(--dur-fast); }
+#mode-toggle button.on { background: var(--bg-raised); color: var(--ink);
+  box-shadow: var(--shadow-panel); }
+
+/* logo */
+#logo { display: flex; gap: 4px; }
+#logo .lt { width: 44px; height: 44px; border-radius: calc(var(--radius-tile) * .6);
+  color: var(--tile-ink); font-weight: 800; font-size: 20px; font-family: var(--font-display);
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: calc(var(--edge-w) * .6) solid transparent; }
+#logo .lt.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
+#logo .lt.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
+#logo .lt.n { background: var(--tile-gray); border-bottom-color: var(--tile-edge-gray); }
+@keyframes flipin { from { transform: rotateX(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+#logo.animate .lt { animation: flipin var(--dur-tile) var(--ease-pop) backwards; }
+
+/* board */
+#board { display: flex; flex-direction: column; gap: 5px; align-items: center; padding: 8px 0; }
+.brow { display: flex; gap: 5px; position: relative; }
+.row-remove { position: absolute; right: -34px; top: 50%; transform: translateY(-50%);
+  width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%;
+  background: var(--bg-raised); color: var(--muted); font-size: 15px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity var(--dur-fast), color var(--dur-fast), transform var(--dur-fast); }
+.brow:hover .row-remove, .row-remove:focus-visible { opacity: 1; }
+.row-remove:hover { color: var(--ink); transform: translateY(-50%) scale(1.12); }
+@media (hover: none) { .row-remove { opacity: .55; width: 36px; height: 36px; } }
+.tile { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
+  font: 800 24px var(--font-display); text-transform: uppercase;
+  border-radius: var(--radius-tile); color: var(--tile-ink);
+  border-bottom: var(--edge-w) solid transparent;
+  transition: transform var(--dur-fast); }
+.tile.empty { background: transparent; border: 2px solid var(--tile-empty-border); color: transparent; }
+.tile.pending { background: transparent; border: 2px solid var(--muted); color: var(--ink); }
+.tile.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
+.tile.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
+.tile.n { background: var(--tile-gray); border-bottom-color: var(--tile-edge-gray); }
+.tile.cyclable { cursor: pointer; }
+.tile.cyclable:hover { transform: scale(1.08); }
+.tile.focused { outline: 2px solid var(--ink); outline-offset: 2px; }
+.brow.committed .tile { animation: flipin var(--dur-tile) var(--ease-pop) backwards; }
+.brow.committed .tile:nth-child(2) { animation-delay: 80ms; }
+.brow.committed .tile:nth-child(3) { animation-delay: 160ms; }
+.brow.committed .tile:nth-child(4) { animation-delay: 240ms; }
+.brow.committed .tile:nth-child(5) { animation-delay: 320ms; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.brow.shake { animation: shake 400ms; }
+
+@keyframes rowdeal { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+#board.dealing .brow { animation: rowdeal var(--dur-tile) var(--ease-pop) backwards; }
+#board.dealing .brow:nth-child(2) { animation-delay: 60ms; }
+#board.dealing .brow:nth-child(3) { animation-delay: 120ms; }
+#board.dealing .brow:nth-child(4) { animation-delay: 180ms; }
+#board.dealing .brow:nth-child(5) { animation-delay: 240ms; }
+#board.dealing .brow:nth-child(6) { animation-delay: 300ms; }
+
+/* keyboard */
+#keyboard { display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 10px 0 22px; }
+.krow { display: flex; gap: 5px; }
+.key { min-width: 34px; height: 48px; padding: 0 10px; border: none;
+  background: var(--key-bg); color: var(--key-ink); font-weight: 700; font-size: .85rem;
+  border-radius: var(--radius-key); border-bottom: calc(var(--edge-w) * .75) solid var(--key-edge);
+  transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
+html[data-skin="signal"] .key { border: 1px solid var(--line);
+  border-bottom: 1px solid var(--line); }
+.key:hover { transform: translateY(-2px) scale(1.05); }
+.key:active { transform: translateY(2px) scale(.97); border-bottom-width: 1px; }
+.key.green { background: var(--tile-green); color: var(--tile-ink); border-bottom-color: var(--tile-edge-green); }
+.key.yellow { background: var(--tile-yellow); color: var(--tile-ink); border-bottom-color: var(--tile-edge-yellow); }
+.key.excluded { opacity: .35; }
+.key.wide { min-width: 52px; }
+@keyframes keypop { 40% { transform: scale(1.15); } }
+.key.pressed { animation: keypop calc(var(--dur-fast) * 2) var(--ease-pop); }
+
+/* toast notifications: fixed bottom-center stack, stacking upward; rise in
+   with the skin's pop easing, sink down and fade on exit */
+#toast-container { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column-reverse; align-items: center; gap: 8px;
+  z-index: 60; pointer-events: none; }
+.toast { background: var(--bg-modal); border: 1px solid var(--line); border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel); padding: 10px 18px; font-size: .85rem; font-weight: 600;
+  color: var(--ink); opacity: 0; transform: translateY(18px);
+  transition: transform var(--dur-tile) var(--ease-pop), opacity var(--dur-tile) ease; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.exit { opacity: 0; transform: translateY(18px); transition-timing-function: ease-in; }
+
+/* suggestions */
+.panel { background: var(--bg-raised); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); padding: 12px 18px;
+  display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+html[data-skin="signal"] .panel { backdrop-filter: blur(8px); }
+.panel h5 { margin: 0 0 6px; font-size: .66rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.hero-word { font: 800 1.4rem var(--font-display); letter-spacing: .28em;
+  text-transform: uppercase; }
+html[data-skin="signal"][data-theme="dark"] .hero-word {
+  background: linear-gradient(90deg, #a5d99f, #e4d489);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-word.blurred { filter: blur(10px); cursor: pointer; }
+.count-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+  background: var(--line); color: var(--muted); border: none;
+  border-radius: 999px; padding: 4px 12px; font-size: .72rem; font-weight: 700; }
+.word-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 6px; flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: 10px; padding: 2px;
+  align-content: start; }
+/* real word-list rows: same bar-chart treatment as the how-to-play mock's
+   .hd-word-row — the green fill IS the row background (a muted tile-green
+   layer under the label), not a separate underline meter */
+.word-list .srow { position: relative; height: 30px; border-radius: var(--radius-key);
+  background: var(--line); overflow: hidden; display: flex; align-items: center; }
+.word-list .srow-fill { position: absolute; inset: 0 auto 0 0; background: var(--tile-green); opacity: .4; }
+.word-list .srow-text { position: relative; z-index: 1; padding-left: 10px; line-height: 1;
+  font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.list-caption { font-size: .68rem; color: var(--muted); margin-top: 8px; }
+
+#banner { width: fit-content; max-width: min(420px, 92vw); margin: 0 auto;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-key);
+  padding: 8px 14px; }
+#banner[hidden] { display: none; }
+@keyframes bannerpop { from { transform: scale(.96); opacity: .6; } }
+#banner.banner-pop { animation: bannerpop var(--dur-fast) var(--ease-pop); }
+#banner .banner-bar { width: 4px; align-self: stretch; flex: none; border-radius: 999px;
+  background: var(--line); }
+#banner.win .banner-bar { background: var(--tile-green); }
+#banner.lose .banner-bar { background: var(--tile-gray); }
+#banner.warn .banner-bar { background: var(--tile-yellow); }
+#banner.info .banner-bar { background: var(--line); }
+#banner .banner-text { flex: 1; text-align: left; color: var(--ink); font-size: .9rem; font-weight: 600; }
+#banner .banner-act { flex: none; margin-top: 0; background: transparent; color: var(--accent);
+  border: 1px solid var(--accent); transition: background var(--dur-fast), color var(--dur-fast); }
+#banner .banner-act:hover { background: var(--accent); color: #fff; }
+
+dialog { border: 1px solid var(--line); border-radius: var(--radius-panel);
+  background: var(--bg-modal); color: var(--ink); padding: 0; width: min(92vw, 440px); }
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+html[data-skin="signal"] dialog::backdrop { backdrop-filter: blur(10px); background: rgba(8, 10, 14, .5); }
+.dialog-body { padding: 22px; }
+.moving-gif { position: fixed; width: 100px; height: 100px; pointer-events: none;
+  z-index: 40; display: none; }
+
+/* shared dialog language: title with tile bullet + unified section labels,
+   scoped to the three redesigned dialogs (stats/help/settings) so the
+   already-custom analysis-modal heading is left untouched. */
+#help-modal h3, #settings-modal h3 {
+  font-family: var(--font-display); font-size: 1.05rem; font-weight: 800;
+  letter-spacing: .01em; margin: 0 0 16px; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+}
+#settings-modal h3 { font-size: 1.15rem; }
+#help-modal h3::before, #settings-modal h3::before {
+  content: ''; width: 12px; height: 12px; border-radius: 3px; background: var(--tile-green);
+  flex: none;
+}
+.set-group h5, .section-label {
+  margin: 0 0 10px; font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); font-weight: 700;
+}
+.dialog-group { margin-bottom: 20px; }
+.dialog-group:last-child { margin-bottom: 0; }
+
+.set-group { margin-bottom: 20px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatches button { display: flex; flex-direction: column; align-items: center; gap: 6px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: var(--radius-key); padding: 9px 13px; font-size: .72rem; font-weight: 700; }
+.swatches button.on { border: 2px solid var(--accent); padding: 8px 12px; }
+.sw { width: 40px; height: 24px; border-radius: 5px; display: block; }
+.sw-board { background: linear-gradient(90deg, #fff 50%, #121213 50%); border: 1px solid #999; }
+.sw-signal { background: radial-gradient(circle at 20% 0%, #2c3a2e, #101216); }
+.sw-arcade { background: linear-gradient(90deg, #58cc7a 33%, #ffc94d 33% 66%, #fdf8ef 66%); }
+.set-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin-bottom: 8px; cursor: pointer; }
+.set-check input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.checkbox-box { width: 18px; height: 18px; flex: none; position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--muted); border-radius: calc(var(--radius-key) * .6); background: var(--bg-raised);
+  transition: background var(--dur-fast), border-color var(--dur-fast); }
+.set-check input:checked + .checkbox-box { background: var(--accent); border-color: var(--accent); }
+.set-check input:checked + .checkbox-box::after { content: ''; width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.set-check input:focus-visible + .checkbox-box { outline: 2px solid var(--accent); outline-offset: 2px; }
+.set-sub { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
+
+/* help modal grows wider to fit the animated walkthrough stage */
+#help-modal { width: min(92vw, 560px); }
+
+/* themed play-a-day calendar: lives inside #play-day (panel-left), which is
+   itself shown/hidden per mode in layouts.css */
+#play-day-calendar { margin-bottom: 4px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-label { font-family: var(--font-display); font-weight: 700; font-size: .82rem; color: var(--ink); }
+.cal-nav { width: 26px; height: 26px; border: 1px solid var(--line); background: var(--bg-raised);
+  color: var(--ink); border-radius: var(--radius-key); display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; line-height: 1; padding: 0;
+  transition: color var(--dur-fast), transform var(--dur-fast), border-color var(--dur-fast); }
+.cal-nav:hover:not(:disabled) { color: var(--accent); transform: translateY(-1px); border-color: var(--muted); }
+.cal-nav:disabled { opacity: .3; cursor: not-allowed; }
+.cal-weekdays, .cal-grid { display: grid; grid-template-columns: repeat(7, 32px); justify-content: space-between; }
+.cal-weekdays { margin-bottom: 4px; }
+.cal-weekdays span { display: block; text-align: center; font-size: .62rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; }
+.cal-grid { row-gap: 4px; }
+.cal-day { position: relative; width: 32px; height: 32px; border: none; background: transparent;
+  color: var(--ink); font-size: .78rem; font-weight: 600; border-radius: calc(var(--radius-key) * .75);
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  transition: background var(--dur-fast), transform var(--dur-fast), color var(--dur-fast); }
+.cal-day.cal-outside { visibility: hidden; }
+.cal-day:not(.cal-disabled):not(.cal-selected):hover { background: var(--line); transform: scale(1.08); }
+.cal-day.cal-disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.cal-day.cal-today { box-shadow: inset 0 0 0 2px var(--accent); }
+.cal-day.cal-selected { background: var(--accent); color: #fff; }
+.cal-day .cal-dot { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%; background: var(--tile-gray); }
+.cal-day.cal-won .cal-dot { background: var(--tile-green); }
+.cal-day.cal-selected .cal-dot { background: #fff; }
+.practice-refresh-note { margin: 4px 0 0; font-size: .72rem; color: var(--muted); text-align: center; }
+
+/* left-panel lists: past answers (solver) + recently played (practice) */
+#panel-left .section-label { margin-bottom: 8px; }
+#panel-left .recent-label { margin-top: 16px; }
+.scroll-list { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.past-row { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px;
+  padding: 5px 6px; font-size: .78rem; border-radius: calc(var(--radius-key) * .6); }
+.past-row .past-date { color: var(--muted); font-size: .72rem; text-align: left;
+  font-variant-numeric: tabular-nums; }
+.past-row .past-word { color: var(--ink); font-weight: 700; letter-spacing: .05em;
+  text-align: left; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.recent-row .recent-mark { font-weight: 800; }
+.recent-row.won .recent-mark { color: var(--tile-edge-green, var(--accent)); }
+.recent-row.lost .recent-mark { color: var(--muted); }
+.muted-note { font-size: .78rem; color: var(--muted); margin: 0; }
+
+.stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.dist { display: flex; flex-direction: column; gap: 4px; }
+.drow { display: flex; align-items: center; gap: 8px; font-size: .75rem; font-weight: 700; }
+.drow .dbar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.drow .dbar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+
+/* #stats-content is rendered directly into the practice-mode right panel
+   (#panel-right); panel chrome is applied contextually here. */
+.stats-body h5 { margin: 0 0 10px; font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); font-weight: 700; }
+#panel-right .stats-body { background: var(--bg-raised); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); padding: 12px 18px;
+  display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+html[data-skin="signal"] #panel-right .stats-body { backdrop-filter: blur(8px); }
+
+/* stats dialog: redesigned layout built directly in stats.js (not a clone
+   of #stats-content) — title, 4-cell stat row, distribution, footnote. */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-bottom: 20px; text-align: center; }
+.stat-cell { display: flex; flex-direction: column; gap: 4px; }
+.stat-cell b { font: 800 1.3rem var(--font-display); font-variant-numeric: tabular-nums; }
+.stat-cell span { font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.stat-divider { height: 1px; background: var(--line); margin: 0 0 20px; }
+.dist-modal .dbar { height: 18px; }
+.stats-footnote { margin: 20px 0 0; font-size: .78rem; color: var(--muted); }
+
+@keyframes glowpulse { 0% { box-shadow: 0 0 0 rgba(106, 170, 100, 0); }
+  40% { box-shadow: 0 0 60px rgba(106, 170, 100, .55); }
+  100% { box-shadow: 0 0 0 rgba(106, 170, 100, 0); } }
+#board.glow-pulse { animation: glowpulse 1.2s ease-out; border-radius: var(--radius-panel); }
+
+.close-modal { margin: 16px auto 0; display: block; border: none; border-radius: var(--radius-key);
+  padding: 8px 20px; font-weight: 700; font-size: .85rem; cursor: pointer;
+  background: var(--accent); color: #fff;
+  border-bottom: calc(var(--edge-w) * .75) solid var(--tile-edge-green);
+  transition: transform var(--dur-fast) var(--ease-pop); }
+.close-modal:hover { transform: translateY(-1px) scale(1.04); }
+.close-modal:active { transform: translateY(1px); border-bottom-width: 1px; }
+
+html { scrollbar-color: var(--tile-gray) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--tile-gray); border-radius: 99px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+html[data-mode="solver"] #stats-content { display: none; }
+
+.hero-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+
+/* post-solve analysis */
+.brow.mini .tile { width: 28px; height: 28px; font-size: 13px; border-width: 2px; }
+#analysis-modal { width: min(92vw, 460px); }
+.analysis-summary { margin-bottom: 14px; }
+.analysis-summary h3 { margin: 0 0 4px; font-size: 1.05rem; font-family: var(--font-display); }
+.analysis-sub { margin: 0; font-size: .78rem; font-weight: 700; color: var(--muted); }
+.analysis-list { display: flex; flex-direction: column; gap: 14px;
+  max-height: 55vh; overflow-y: auto; padding-right: 2px; }
+.analysis-guess { display: flex; flex-direction: column; gap: 5px; }
+.analysis-line { font-size: .78rem; font-weight: 700; }
+.analysis-pick { font-size: .74rem; color: var(--muted); }
+.analysis-match { background: var(--tile-green); color: var(--tile-ink); }
+
+/* ================================================================
+   Cinematic how-to-play walkthrough (helpdemo.js) — CAMERA SYSTEM.
+   A tour engine (helpdemo.js) plays scripted steps over `.hd-mock`, a
+   LARGE, DETAILED, component-accurate mock of the real UI (840x520
+   logical px) built entirely from `.hd-*` divs styled by the shared
+   design tokens — nothing here is the real board/keyboard/panel markup.
+   `.hd-stage` is a small (~480x330) viewport with overflow hidden; a
+   virtual camera pans/zooms by animating `transform: translate() scale()`
+   on `.hd-mock` so every step frames its subject large and readable, the
+   same way a screen recording zooms into whatever it's explaining. Every
+   new keyframe/transition below only ever touches transform/opacity
+   (never width/height/left/top/margin) so the whole thing stays 60fps
+   regardless of skin; the fake word-count ticker and every caption are
+   updated via textContent from rAF/timeouts, never by animating a layout
+   property. Durations/easing pull from the --dur-* / --ease-pop tokens (the
+   camera's own .8s duration is zeroed separately below) so pacing follows
+   the active skin and — via the global prefers-reduced-motion rule in
+   tokens.css — collapse toward 0ms; reduced motion additionally makes
+   helpdemo.js bypass the animated loop entirely in favor of one static
+   wide shot plus the plain caption list below (.hd-static-captions).
+   ================================================================ */
+.help-demo { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px;
+  transition: opacity var(--dur-tile) ease; }
+.help-demo.fading { opacity: 0; }
+
+.hd-stage { position: relative; width: 480px; max-width: 100%; height: 330px;
+  margin: 0 auto; overflow: hidden; box-sizing: border-box;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-panel); }
+.hd-stage.hd-mount { animation: hdStageIn var(--dur-tile) var(--ease-pop); }
+@keyframes hdStageIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+
+/* the big detailed canvas the camera moves around inside — fixed logical
+   size regardless of the stage's rendered size, cropped by the stage's
+   overflow:hidden; only ever transform: translate()+scale() is animated */
+.hd-mock { position: absolute; top: 0; left: 0; width: 880px; height: 520px;
+  transform-origin: 0 0; display: flex; gap: 28px; padding: 26px; box-sizing: border-box;
+  transition: transform .8s cubic-bezier(.4, 0, .2, 1); will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .hd-mock { transition: none; } }
+
+.hd-col { display: flex; flex-direction: column; gap: 16px; min-width: 0;
+  opacity: 1; transition: opacity var(--dur-tile) ease; }
+.hd-left, .hd-right { flex: 0 0 210px; }
+.hd-center { flex: 1 1 auto; align-items: center; justify-content: flex-start; gap: 26px; padding-top: 6px; }
+/* Close-up guard: a target's aspect ratio rarely matches the stage's, so
+   camFocus's fit-to-target scale can leave slack on the *other* axis even
+   while the target itself is framed tight — that slack used to show an
+   undimmed sliver of whatever column sits next to the target (a stray
+   board tile, a keyboard key) at the edge of the shot. Dimming every
+   top-level column except the one holding the current target (set/cleared
+   by camFocus/camWide in helpdemo.js) keeps every close-up free of that
+   clutter without touching layout. */
+.hd-col.hd-dim { opacity: .25; }
+
+.hd-card { background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-panel);
+  padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.hd-card-label { font-size: .78rem; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); font-weight: 800; }
+
+/* board: 6 rows x 5 tiles, reusing the real tile color tokens — readable
+   at every zoom, from the wide establishing shot to a full board close-up */
+.hd-board { display: flex; flex-direction: column; gap: 7px; align-items: center; }
+.hd-brow { display: flex; gap: 7px; }
+.hd-tile { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  font: 800 18px var(--font-display); text-transform: uppercase; color: var(--tile-ink);
+  border-radius: calc(var(--radius-tile) * .7); border: 2px solid var(--tile-empty-border);
+  border-bottom-width: 4px; border-bottom-color: transparent;
+  animation: hdTileIn var(--dur-tile) var(--ease-pop) backwards; }
+@keyframes hdTileIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+.hd-tile.pending { color: var(--ink); }
+.hd-tile.g { background: var(--tile-green); border-color: var(--tile-edge-green); }
+.hd-tile.y { background: var(--tile-yellow); border-color: var(--tile-edge-yellow); }
+.hd-tile.n { background: var(--tile-gray); border-color: var(--tile-edge-gray); }
+.hd-tile.facedown { background: var(--tile-gray); opacity: .55; border-color: transparent; color: transparent; }
+.hd-brow.pulsing .hd-tile.facedown { animation: hdTileIn var(--dur-tile) var(--ease-pop) backwards,
+  hdRowPulse calc(var(--dur-tile) * 2.6) var(--ease-pop) infinite; }
+@keyframes hdRowPulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.05); opacity: .85; } }
+/* Enter-committed row: flip reveal, staggered like the real board */
+@keyframes hdFlip { from { transform: rotateX(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.hd-brow.committed .hd-tile { animation: hdFlip var(--dur-tile) var(--ease-pop) backwards; }
+.hd-brow.committed .hd-tile:nth-child(2) { animation-delay: 60ms; }
+.hd-brow.committed .hd-tile:nth-child(3) { animation-delay: 120ms; }
+.hd-brow.committed .hd-tile:nth-child(4) { animation-delay: 180ms; }
+.hd-brow.committed .hd-tile:nth-child(5) { animation-delay: 240ms; }
+/* one-shot emphasis pulse layered on a specific tile/key/row (e.g. "gray
+   means not in the word") independent of the camera move */
+.hd-pulse { animation: hdPulse calc(var(--dur-fast) * 2.4) var(--ease-pop); }
+@keyframes hdPulse { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.3); } }
+.hd-brow.hd-celebrate { animation: hdCelebrate var(--dur-tile) var(--ease-pop); }
+@keyframes hdCelebrate { 0% { transform: scale(1); } 40% { transform: scale(1.1); }
+  70% { transform: scale(.96); } 100% { transform: scale(1); } }
+/* click feedback: brief non-uniform squash on the element the cursor taps */
+.hd-squash { animation: hdSquash .3s var(--ease-pop); }
+@keyframes hdSquash { 0% { transform: scale(1); } 40% { transform: scale(1.12, .86); } 100% { transform: scale(1); } }
+
+/* keyboard: 3 rows of real keys with letters, big enough to read once the
+   camera closes in on a single key (e.g. Enter) */
+.hd-keyboard { display: flex; flex-direction: column; gap: 7px; align-items: center; }
+.hd-krow { display: flex; gap: 5px; }
+.hd-key { min-width: 30px; height: 32px; padding: 0 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--key-ink); border-radius: 5px;
+  background: var(--key-bg); border-bottom: 3px solid var(--key-edge);
+  transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
+.hd-key.wide { min-width: 46px; }
+.hd-key.g { background: var(--tile-green); border-bottom-color: var(--tile-edge-green); }
+.hd-key.y { background: var(--tile-yellow); border-bottom-color: var(--tile-edge-yellow); }
+@keyframes hdKeyPress { 40% { transform: scale(1.3) translateY(-3px); } }
+.hd-key.press { animation: hdKeyPress calc(var(--dur-fast) * 2) var(--ease-pop); }
+
+/* past-answers rows: real date + word text, cascading in and (on undo)
+   sliding back out — transform/opacity only, never width/height */
+/* reserves the full 5-row height up front so the camera (framed once, at
+   step start, around the card's current size) never has to re-center as
+   rows cascade in after it — otherwise the card grows taller than the
+   already-committed close-up and the bottom rows get cropped */
+.hd-mini-list { display: flex; flex-direction: column; gap: 8px; width: 100%; min-height: 166px; }
+.hd-mini-row { height: 26px; border-radius: 6px; background: var(--line); position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px;
+  box-sizing: border-box; transform-origin: left center;
+  animation: hdRowIn var(--dur-tile) var(--ease-pop) backwards; }
+@keyframes hdRowIn { from { opacity: 0; transform: translateY(4px) scaleX(.7); } to { opacity: 1; transform: none; } }
+.hd-mini-list .hd-mini-row:nth-child(1) { animation-delay: 0ms; }
+.hd-mini-list .hd-mini-row:nth-child(2) { animation-delay: 60ms; }
+.hd-mini-list .hd-mini-row:nth-child(3) { animation-delay: 120ms; }
+.hd-mini-list .hd-mini-row:nth-child(4) { animation-delay: 180ms; }
+.hd-mini-list .hd-mini-row:nth-child(5) { animation-delay: 240ms; }
+.hd-mini-date { font-size: .72rem; color: var(--muted); font-weight: 700; }
+.hd-mini-word { font-size: .82rem; color: var(--ink); font-weight: 800; letter-spacing: .05em; }
+.hd-mini-row.hd-exit { animation: hdRowOut var(--dur-tile) var(--ease-pop) forwards; }
+@keyframes hdRowOut { to { opacity: 0; transform: translateX(-16px); } }
+/* board row removal (row-removal tour step): the committed guess row slides
+   out the same way a past-answers row does, reusing hdRowOut */
+.hd-brow.hd-exit { animation: hdRowOut var(--dur-tile) var(--ease-pop) forwards; }
+/* floating "remove this guess" control for that step — a mock-level element
+   (sibling of the cursor/chip, not nested inside the row) positioned via
+   translate() at the row's outer edge, mirroring where the real
+   .row-remove button sits, outside the row's own bounds */
+.hd-x-mark { position: absolute; left: 0; top: 0; opacity: 0;
+  width: 20px; height: 20px; border-radius: 50%; background: var(--bg-modal);
+  border: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity var(--dur-fast) var(--ease-pop); pointer-events: none; z-index: 6; }
+.hd-x-mark.show { opacity: 1; }
+
+/* suggestions card: hero word, "N words left" chip, and 4 ranked word rows
+   each with a green confidence bar (scaleX only) behind the word text */
+.hd-hero { align-self: center; font: 800 1.9rem var(--font-display); letter-spacing: .1em; color: var(--ink);
+  opacity: 0; transform: scale(.8); transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
+.hd-hero.show { opacity: 1; transform: scale(1); }
+.hd-count-chip { align-self: center; font-size: .8rem; font-weight: 700; color: var(--muted);
+  font-variant-numeric: tabular-nums; background: var(--line); padding: 4px 14px; border-radius: 999px;
+  opacity: 0; transition: opacity var(--dur-fast); }
+.hd-count-chip.show { opacity: 1; }
+/* same reservation as .hd-mini-list, sized for the 4 ranked word rows */
+.hd-word-rows { display: flex; flex-direction: column; gap: 8px; min-height: 136px; }
+.hd-word-row { position: relative; height: 28px; border-radius: 6px; overflow: hidden; background: var(--line);
+  display: flex; align-items: center; padding: 0 10px; box-sizing: border-box;
+  animation: hdRowIn var(--dur-tile) var(--ease-pop) backwards; }
+.hd-word-row-bar { position: absolute; inset: 0; background: var(--tile-green); opacity: .4;
+  transform-origin: left center; transform: scaleX(0); transition: transform .5s var(--ease-pop); }
+.hd-word-row.show .hd-word-row-bar { transform: scaleX(var(--w, 1)); }
+.hd-word-row-text { position: relative; font: 700 13px var(--font-display); letter-spacing: .05em; color: var(--ink); }
+
+/* hint card: a blur cover fades on/off — only ever transitions opacity,
+   the blur amount itself is a static value, never animated */
+.hd-hint { position: relative; display: inline-flex; align-self: center; }
+.hd-hint-cover { position: absolute; inset: -6px; backdrop-filter: blur(6px); background: rgba(130, 130, 130, .45);
+  border-radius: 8px; opacity: 1; transition: opacity var(--dur-tile) ease; }
+.hd-hint-cover.hd-wiped { opacity: 0; }
+
+/* stats card: 3 labeled chips + 3 mini bars that fill via scaleX */
+.hd-stat-chips { display: flex; gap: 8px; }
+.hd-stat-chip { flex: 1; background: var(--line); border-radius: 8px; padding: 8px 4px; text-align: center; }
+.hd-stat-chip b { display: block; font: 800 1rem var(--font-display); color: var(--ink); }
+.hd-stat-chip span { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.hd-stats { display: flex; flex-direction: column; gap: 7px; }
+.hd-stat-bar { height: 9px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.hd-stat-bar i { display: block; height: 100%; width: 100%; border-radius: 99px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left center; transition: transform var(--dur-tile) var(--ease-pop); }
+.hd-stat-bar.fill i { transform: scaleX(var(--v, 1)); }
+
+/* play-a-day calendar: real day numbers, one ringed ("today"), one dotted
+   ("already played") */
+.hd-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.hd-cal-day { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; background: var(--line); font-size: .68rem; font-weight: 700; color: var(--muted);
+  opacity: 0; transform: scale(.5); animation: hdCalIn var(--dur-fast) var(--ease-pop) both;
+  transition: transform var(--dur-fast) var(--ease-pop); }
+@keyframes hdCalIn { to { opacity: 1; transform: scale(1); } }
+.hd-cal-day.hd-today { box-shadow: 0 0 0 2px var(--accent) inset; color: var(--ink); }
+.hd-cal-day::after { content: ''; position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%) scale(0);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--tile-green); opacity: 0;
+  transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
+.hd-cal-day.hd-dot::after { opacity: 1; transform: translateX(-50%) scale(1); }
+.hd-cal-day.hd-picked { background: var(--accent); color: var(--tile-ink); transform: scale(1.12); }
+
+/* refresh icon: hidden until its own step reveals it (fading it in rather
+   than leaving a permanently-visible, unexplained ring in every earlier
+   shot); spins via transform only */
+.hd-refresh { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--muted);
+  border-top-color: transparent; opacity: 0; transition: opacity var(--dur-fast); }
+.hd-refresh.show { opacity: 1; }
+.hd-refresh.spin { animation: hdSpin var(--dur-tile) linear; }
+@keyframes hdSpin { to { transform: rotate(360deg); } }
+
+/* cursor: an accent-ringed dot with a drop shadow, always visible while
+   moving, child of .hd-mock so it tracks the camera automatically; taps
+   trigger a ripple ring + a squash of the tapped element (see .hd-squash) */
+.hd-pointer { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  opacity: 0; transform: translate(0, 0); border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent), 0 2px 6px rgba(0, 0, 0, .35);
+  transition: transform .5s var(--ease-pop), opacity var(--dur-fast);
+  pointer-events: none; z-index: 5; }
+.hd-pointer.show { opacity: .95; }
+.hd-pointer.tap { animation: hdTap calc(var(--dur-fast) * 2) var(--ease-pop); }
+@keyframes hdTap { 45% { transform: scale(.55); } }
+.hd-ripple { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  border-radius: 50%; border: 2px solid var(--accent); opacity: 0; transform: translate(0, 0) scale(1);
+  pointer-events: none; z-index: 5; }
+.hd-ripple.go { animation: hdRipple .5s var(--ease-pop); }
+@keyframes hdRipple {
+  0% { opacity: .9; transform: translate(var(--tx, 0), var(--ty, 0)) scale(.6); }
+  100% { opacity: 0; transform: translate(var(--tx, 0), var(--ty, 0)) scale(2.6); }
+}
+
+/* micro-caption chips: small floating labels anchored next to the tile
+   they explain (e.g. "yellow = right letter, wrong spot"), inside the
+   camera view so they zoom/pan along with everything else */
+.hd-chip { position: absolute; left: 0; top: 0; opacity: 0;
+  background: var(--bg-modal); border: 1px solid var(--line); color: var(--ink);
+  font: 700 13px var(--font-display); padding: 5px 12px; border-radius: 999px;
+  white-space: nowrap; pointer-events: none; z-index: 6;
+  transition: opacity var(--dur-fast) var(--ease-pop), transform var(--dur-fast) var(--ease-pop); }
+.hd-chip.show { opacity: 1; }
+
+/* the live caption bar below the stage: a fixed-height centered area,
+   whole-line fade+rise per step (no typewriter — a frame landing mid-word
+   reads as a glitch) */
+.hd-caption { margin: 12px 0 0; min-height: 2.4em; display: flex; align-items: center; justify-content: center;
+  font-size: .84rem; color: var(--ink); font-weight: 600;
+  text-align: center; opacity: 0; transform: translateY(8px);
+  transition: opacity var(--dur-tile) var(--ease-pop), transform var(--dur-tile) var(--ease-pop); }
+.hd-caption.show { opacity: 1; transform: none; }
+
+/* step-progress dots */
+.hd-dots { display: flex; gap: 6px; margin-top: 14px; justify-content: center; }
+.hd-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line);
+  transform: scale(1); transition: transform var(--dur-fast) var(--ease-pop); }
+.hd-dot.on { background: var(--accent); transform: scale(1.35); }
+
+.hd-static-captions { margin: 14px 0 0; padding-left: 20px; font-size: .8rem; color: var(--muted); text-align: left; }
+.hd-static-captions li { margin-bottom: 5px; }
+.hd-mt { margin-top: 10px; }
+
+@media (max-width: 480px) {
+  .hd-stage { height: 280px; }
+}
+
+/* ===== mobile / responsive pass (Task F5) ===== */
+@media (max-width: 480px) {
+  /* the desktop header centers the logo above a centered toggle with the
+     help/theme buttons absolutely pinned top-right — at narrow widths a
+     centered 7-tile logo can run wide enough to collide with those pinned
+     buttons, so mobile reverts to a compact grid: logo left / actions right,
+     toggle centered on its own row underneath. */
+  #topbar { display: grid; grid-template-columns: 1fr auto; row-gap: 10px;
+    grid-template-areas: "logo actions" "toggle toggle"; gap: 8px; padding: 10px 16px 14px; }
+  #logo { grid-area: logo; justify-self: start; }
+  #top-actions { grid-area: actions; justify-self: end; position: static; }
+  #mode-toggle { grid-area: toggle; justify-self: stretch; justify-content: center; }
+
+  #top-actions button { width: 40px; height: 40px; }
+  #mode-toggle button { padding: 9px 16px; }
+  .count-chip { min-height: 36px; align-items: center; }
+
+  #board { gap: 4px; }
+  .brow { gap: 4px; }
+  .tile { width: 44px; height: 44px; font-size: 20px; }
+
+  #logo .lt { width: 24px; height: 24px; font-size: 12px; }
+
+  .krow { gap: 4px; }
+  .key, .key.wide {
+    min-width: calc((100vw - 40px - 36px) / 10);
+    padding: 0 2px;
+    font-size: .72rem;
+  }
+
+  .word-list { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+
+  #banner { max-width: 92vw; }
+}
+
+@media (max-width: 420px) {
+  .row-remove { right: 2px; }
+}
