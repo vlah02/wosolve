@@ -250,7 +250,7 @@ export function animateLogo() {
   el.querySelectorAll('.lt').forEach((t, i) => t.style.animationDelay = `${i * 90}ms`);
 }
 
-// Lightweight toast system: fixed top-center stack, independent of the
+// Lightweight toast system: fixed bottom-center stack, independent of the
 // single-slot #banner. Used for low-stakes/ambient notices; win/lose/warn
 // messages keep using showBanner. Entrance/exit are transform+opacity only,
 // so the global prefers-reduced-motion rule (--dur-fast: 0ms) collapses them
@@ -274,6 +274,6 @@ export function showToast(text) {
   setTimeout(() => {
     t.classList.remove('show');
     t.classList.add('exit');
-    setTimeout(() => t.remove(), 300);
+    setTimeout(() => t.remove(), 600);
   }, 3000);
 }

@@ -101,17 +101,17 @@ html[data-skin="signal"] .key { border: 1px solid var(--line);
 @keyframes keypop { 40% { transform: scale(1.15); } }
 .key.pressed { animation: keypop calc(var(--dur-fast) * 2) var(--ease-pop); }
 
-/* toast notifications: fixed bottom-right stack, stacking upward, brief
-   slide/fade in from the right and out */
-#toast-container { position: fixed; bottom: 24px; right: 24px;
-  display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 8px;
+/* toast notifications: fixed bottom-center stack, stacking upward; rise in
+   with the skin's pop easing, sink down and fade on exit */
+#toast-container { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column-reverse; align-items: center; gap: 8px;
   z-index: 60; pointer-events: none; }
 .toast { background: var(--bg-modal); border: 1px solid var(--line); border-radius: var(--radius-panel);
   box-shadow: var(--shadow-panel); padding: 10px 18px; font-size: .85rem; font-weight: 600;
-  color: var(--ink); opacity: 0; transform: translateX(24px);
-  transition: transform var(--dur-fast) var(--ease-pop), opacity var(--dur-fast); }
-.toast.show { opacity: 1; transform: translateX(0); }
-.toast.exit { opacity: 0; transform: translateX(24px); }
+  color: var(--ink); opacity: 0; transform: translateY(18px);
+  transition: transform var(--dur-tile) var(--ease-pop), opacity var(--dur-tile) ease; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.exit { opacity: 0; transform: translateY(18px); transition-timing-function: ease-in; }
 
 /* suggestions */
 .panel { background: var(--bg-raised); border: 1px solid var(--line);
