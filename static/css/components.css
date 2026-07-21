@@ -12,6 +12,8 @@ html[data-skin="signal"][data-theme="dark"] body {
   background: radial-gradient(120% 90% at 18% 0%, #1d2430 0%, var(--bg) 55%);
 }
 button { font-family: inherit; cursor: pointer; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .key:focus-visible { outline-color: var(--ink); }
 
@@ -307,6 +309,14 @@ html { scrollbar-color: var(--tile-gray) transparent; scrollbar-width: thin; }
 
 html[data-mode="solver"] #stats-content { display: none; }
 
+/* persistent "View analysis" affordance (right panel): a normal count-chip,
+   but #panel-right > * (above) forces flex:1 1 auto/column on every direct
+   child for the panel's own layout — override back to a compact, centered,
+   row-flow chip so it doesn't stretch to fill the remaining column height. */
+#panel-right #analysis-affordance { flex: none; display: inline-flex; flex-direction: row;
+  align-self: center; margin: 10px 0 0; }
+#panel-right #analysis-affordance[hidden] { display: none; }
+
 .hero-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }
 
 /* post-solve analysis */
@@ -593,8 +603,21 @@ html[data-mode="solver"] #stats-content { display: none; }
   #mode-toggle { grid-area: toggle; justify-self: stretch; justify-content: center; }
 
   #top-actions button { width: 40px; height: 40px; }
-  #mode-toggle button { padding: 9px 16px; }
-  .count-chip { min-height: 36px; align-items: center; }
+  #mode-toggle button { padding: 9px 16px; min-height: 40px; display: flex;
+    align-items: center; justify-content: center; }
+  /* Only real controls (rendered as <button class="count-chip">, e.g. banner
+     actions, the analysis affordance, "see all"/undo) need a touch target —
+     the plain <span class="count-chip"> stat badges are inert display-only
+     pills, so bumping this on the base class would visually bloat them for
+     no accessibility benefit. */
+  button.count-chip { min-height: 40px; }
+  .close-modal { min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .cal-day, .cal-nav { width: 40px; height: 40px; }
+  .cal-weekdays, .cal-grid { grid-template-columns: repeat(7, 40px); }
+  /* .row-remove stays at its existing 36x36 hover:none size (components.css
+     above): it's a low-frequency, conditionally-revealed secondary action
+     tucked at the board's outer edge, and 40px there risks vertically
+     overlapping the adjacent guess row on the tightly-packed mobile board. */
 
   #board { gap: 4px; }
   .brow { gap: 4px; }

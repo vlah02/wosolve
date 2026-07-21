@@ -8,6 +8,7 @@ export function initUI(callbacks) {
   cb = callbacks;
   buildKeyboard();
   buildLogo();
+  initResponsiveOrder();
   window.addEventListener('keydown', onPhysicalKey);
   $('#help-btn').onclick = () => $('#help-modal').showModal();
   document.querySelectorAll('.close-modal').forEach(b => b.onclick = () => b.closest('dialog').close());
@@ -54,6 +55,31 @@ function onPhysicalKey(e) {
   }
   else if (k === 'arrowup' && focusedTile >= 0) { e.preventDefault(); cb.onCycle(focusedTile); }
   else if (k === 'arrowdown' && focusedTile >= 0) { e.preventDefault(); cb.onCycle(focusedTile, true); }
+}
+
+// Keeps keyboard Tab order matching the visually-stacked order below the
+// 980px breakpoint (layouts.css). CSS `order` repaints #panel-left/
+// #center-col/#panel-right as center → right → left there, but `order`
+// does not affect sequential focus navigation in this browser, so relying
+// on it left Tab order stuck at source order (left → center → right) —
+// focus jumped straight to the past-answers/calendar panel before the
+// board. Physically reparenting the three panels to match each
+// breakpoint's visual order fixes that directly, with no CSS `order` at
+// all. Desktop's order IS already the source order (left, center, right),
+// so this is a no-op there.
+const RESPONSIVE_MQ = matchMedia('(max-width: 980px)');
+function applyResponsiveOrder(stacked) {
+  const root = $('#layout-root');
+  const left = $('#panel-left'), center = $('#center-col'), right = $('#panel-right');
+  if (!root || !left || !center || !right) return;
+  // appendChild on an existing child moves it (doesn't clone), so calling
+  // it in the desired order re-sequences all three in one pass.
+  if (stacked) { root.appendChild(center); root.appendChild(right); root.appendChild(left); }
+  else { root.appendChild(left); root.appendChild(center); root.appendChild(right); }
+}
+function initResponsiveOrder() {
+  applyResponsiveOrder(RESPONSIVE_MQ.matches);
+  RESPONSIVE_MQ.addEventListener('change', e => applyResponsiveOrder(e.matches));
 }
 
 function buildKeyboard() {
@@ -224,6 +250,17 @@ export function showBanner(text, kind, actions = []) {
   });
 }
 export function clearBanner() { const b = $('#banner'); b.hidden = true; b.innerHTML = ''; }
+
+// Persistent "View analysis" chip (right panel): unlike the banner's "See
+// analysis" action, this survives a page reload as long as the loaded game
+// is finished, so a completed puzzle's analysis stays reachable after
+// refresh. `onOpen` is the same seeAnalysis callback the banner action uses.
+export function renderAnalysisAffordance(show, onOpen) {
+  const btn = $('#analysis-affordance');
+  if (!btn) return;
+  btn.hidden = !show;
+  btn.onclick = show ? onOpen : null;
+}
 
 export function animateBoardReset() {
   const board = $('#board');

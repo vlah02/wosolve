@@ -64,11 +64,14 @@ export function initGame(wordLists, initUI_) {
   }
   recentPlayed = loadRecent();
   state = load();
-  if (state.mode === 'practice') {
+  if (state.mode === 'practice' && !state.practice.done) {
     // Every page load starts a brand-new random practice game — even mid-game
     // (dated games included; refreshing abandons whatever was in progress).
     // The persisted practice board is only ever read back when switching
-    // modes within the same session (see switchMode/replay below).
+    // modes within the same session (see switchMode/replay below). Exception:
+    // a FINISHED game is left alone on reload (not "in progress" by
+    // definition) so its persistent analysis affordance (see rerender)
+    // still has a game to point at after a refresh.
     newPracticeGame();
     UI.showToast('New word picked — guess it in 6!');
   }
@@ -98,6 +101,15 @@ function pool() {
   return getSettings().extended ? lists.answers.concat(lists.extended) : lists.answers;
 }
 function rows() { return state.mode === 'solver' ? state.solverRows : state.practice.rows; }
+
+// True once the current mode's game is over and analysis is available for
+// it: solver mode is "finished" once trySolve has fired (state.solvedKey
+// set, whether via an all-green submit or process-of-elimination), practice
+// mode once state.practice.done. Backs the persistent "View analysis" chip
+// in the right panel (see rerender) as well as the transient banner action.
+function isFinished() {
+  return state.mode === 'solver' ? !!state.solvedKey : state.practice.done;
+}
 
 function switchMode(mode) {
   if (mode === state.mode) return;
@@ -247,6 +259,11 @@ function onRemoveRow(i) {
 
 function rerender(opts = {}) {
   const r = rows();
+  // A finished practice game is now kept across reload (see initGame) so its
+  // analysis affordance stays reachable, so "refresh for a new word" is no
+  // longer true once the game is done — hide the note for that case.
+  const refreshNote = document.getElementById('practice-refresh-note');
+  if (refreshNote) refreshNote.hidden = state.mode === 'practice' && state.practice.done;
   const showEntry = state.mode === 'solver' || (!state.practice.done && r.length < 6);
   UI.renderRows(r, showEntry ? entry : null,
     { ...opts, removable: state.mode === 'solver', fixedRows: state.mode === 'practice' ? 6 : null });
@@ -268,6 +285,10 @@ function rerender(opts = {}) {
       UI.renderSuggestions({ top: [hintFor()], count: -1, scores: [100], revealed: hintRevealed });
     }
   }
+  // After the solver branch above, which may itself have just flipped the
+  // game to finished (solvedOnce -> trySolve), so this reflects the final
+  // state for this render pass rather than lagging a render behind.
+  UI.renderAnalysisAffordance(isFinished() && r.length > 0, seeAnalysis);
 }
 
 function solvedOnce(word) {

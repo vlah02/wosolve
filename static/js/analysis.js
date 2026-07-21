@@ -57,14 +57,17 @@ export function showAnalysis(analysis) {
   if (!modal || !content) return;
   const { perGuess, summary } = analysis;
   if (!perGuess || !perGuess.length) {
-    content.innerHTML = '';
+    // Keeps the dialog's aria-labelledby (see templates/index.html) resolving
+    // to real text even in this no-data edge case, so the modal still has an
+    // accessible name.
+    content.innerHTML = '<h3 id="analysis-modal-title" class="sr-only">Analysis</h3>';
     modal.showModal();
     return;
   }
   const subtext = summary.won ? `solved in ${summary.guesses}` : `${summary.guesses} guesses used`;
   content.innerHTML = `
     <div class="analysis-summary">
-      <h3>${summary.headline}</h3>
+      <h3 id="analysis-modal-title">${summary.headline}</h3>
       <p class="analysis-sub">${subtext}</p>
     </div>
     <div class="analysis-list">${perGuess.map(guessHtml).join('')}</div>`;

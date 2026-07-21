@@ -29,12 +29,16 @@ html[data-mode="practice"] #past-panel { display: none; }
 html[data-mode="solver"] #practice-refresh-note { display: none; }
 
 /* below ~980px: stack single-column, center column first, then right panel,
-   then left panel, everything centered */
+   then left panel, everything centered. The visual restacking used to be
+   done with CSS `order`, but `order` only affects paint position — it does
+   NOT reorder keyboard/Tab focus (verified: Tab still followed source order
+   left/center/right even though `order` painted center/right/left), so
+   keyboard users had focus jump straight to the last-painted panel first.
+   The DOM is now physically reparented to match visual order at each
+   breakpoint (see initResponsiveOrder in main.js) instead, so no `order`
+   is needed here at all. */
 @media (max-width: 980px) {
   #layout-root { grid-template-columns: minmax(0, 480px); justify-items: center;
     justify-content: center; }
   #panel-left, #panel-right, #center-col { width: 100%; max-width: 480px; }
-  #center-col { order: 1; }
-  #panel-right { order: 2; }
-  #panel-left { order: 3; }
 }

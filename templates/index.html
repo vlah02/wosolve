@@ -55,13 +55,14 @@
       </section>
       <aside id="panel-right">
         <div id="side-suggest"></div>
+        <button id="analysis-affordance" class="count-chip" hidden>View analysis</button>
         <div id="stats-content"></div>
       </aside>
     </main>
   </div>
-  <dialog id="settings-modal">
+  <dialog id="settings-modal" aria-labelledby="settings-modal-title">
     <div class="dialog-body">
-    <h3>Settings</h3>
+    <h3 id="settings-modal-title">Settings</h3>
     <div class="set-group"><h5>Skin</h5>
       <div class="swatches" data-setting="skin" role="radiogroup" aria-label="Skin">
         <button data-value="board"><span class="sw sw-board"></span>Board</button>
@@ -80,9 +81,9 @@
     <button class="close-modal">Done</button>
     </div>
   </dialog>
-  <dialog id="help-modal">
+  <dialog id="help-modal" aria-labelledby="help-modal-title">
     <div class="dialog-body">
-    <h3>How to play</h3>
+    <h3 id="help-modal-title">How to play</h3>
     <div id="help-demo" class="help-demo">
       <div class="hd-stage" id="hd-stage"></div>
       <p class="hd-caption" id="hd-caption"></p>
@@ -92,7 +93,7 @@
     <button class="close-modal">Close</button>
     </div>
   </dialog>
-  <dialog id="analysis-modal">
+  <dialog id="analysis-modal" aria-labelledby="analysis-modal-title">
     <div class="dialog-body">
     <div id="analysis-content"></div>
     <button class="close-modal">Close</button>
