@@ -1,0 +1,10 @@
+# One-click deploy to Render (https://render.com).
+# In the Render dashboard: New > Blueprint, point it at this repo.
+services:
+  - type: web
+    name: wosolve
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT
+    autoDeploy: true

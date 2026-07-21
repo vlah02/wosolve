@@ -1,0 +1,51 @@
+name: Refresh past-answers data
+
+# The dated Wordle answer history (static/data/past-answers.json) is a snapshot.
+# This job re-runs the generator weekly and commits the result if it changed, so
+# the "Past answers" list and the play-a-day calendar stay current. It can also be
+# triggered manually from the Actions tab.
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Regenerate past-answers.json
+        # The generator fails loudly and writes nothing if its source is
+        # unavailable, so a failed fetch leaves the committed data untouched.
+        run: python scripts/gen_past_answers.py
+
+      - name: Verify solver vectors still pass
+        run: |
+          python tests/test_solver.py
+          node tests/run_js_vectors.mjs
+
+      - name: Commit if data changed
+        run: |
+          if git diff --quiet -- static/data/past-answers.json; then
+            echo "No change in past-answers.json."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add static/data/past-answers.json
+          git commit -m "chore: refresh past-answers data"
+          git push

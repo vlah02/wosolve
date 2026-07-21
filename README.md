@@ -1,5 +1,8 @@
 # WoSolve
 
+[![CI](https://github.com/vlah02/wosolve/actions/workflows/ci.yml/badge.svg)](https://github.com/vlah02/wosolve/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 A modern **Wordle solver and practice trainer** that runs entirely in your browser. Feed it the colors from your daily Wordle and it ranks the best next guesses in real time — or flip to Practice mode and play full games against a secret word, with hints, stats, and any historical puzzle from a themed calendar.
 
 Three switchable skins, full light/dark theming, and an animated walkthrough that teaches the whole interface.
@@ -14,6 +17,7 @@ Three switchable skins, full light/dark theming, and an animated walkthrough tha
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
 - [Running it locally](#running-it-locally)
+- [Deployment](#deployment)
 - [Project layout](#project-layout)
 - [Regenerating the data](#regenerating-the-data)
 - [Testing](#testing)
@@ -113,6 +117,30 @@ flask --app app run --host 0.0.0.0
 
 ---
 
+## Deployment
+
+`python app.py` runs Flask's development server, which is fine locally but not for public hosting. For production the app is served with [gunicorn](https://gunicorn.org/) (a `Procfile`, `Dockerfile`, and `render.yaml` are included).
+
+**Docker** — self-contained, runs anywhere:
+
+```bash
+docker build -t wosolve .
+docker run -p 8000:8000 wosolve      # http://localhost:8000
+```
+
+**Any Procfile host** (Render, Railway, Heroku-likes) — the included `Procfile` runs `gunicorn app:app`. On Render specifically you can point a **Blueprint** at the repo and the bundled `render.yaml` provisions a free web service automatically.
+
+**Manually** on any server:
+
+```bash
+pip install -r requirements.txt
+gunicorn app:app --workers 2 --bind 0.0.0.0:8000
+```
+
+There's no database, no secrets, and no build step, so any static-friendly Python host works.
+
+---
+
 ## Project layout
 
 ```
@@ -175,9 +203,12 @@ python tests/test_solver.py
 **JavaScript ↔ Python equivalence** — proves the browser solver matches the reference on all 264 vectors:
 
 - In a browser: run the app and open <http://localhost:5000/static/tests.html>
-- Headless (requires [`gjs`](https://gitlab.gnome.org/GNOME/gjs)): `gjs -m tests/run_js_vectors.js`
+- With Node: `node tests/run_js_vectors.mjs`
+- With [`gjs`](https://gitlab.gnome.org/GNOME/gjs): `gjs -m tests/run_js_vectors.js`
 
-Both should report **ALL … PASS**. There's no build step, so these two suites plus a quick manual pass across skins/themes are the full check.
+Both should report **ALL … PASS**. Both the Python suite and the Node vector runner also run automatically on every push and pull request via [GitHub Actions](.github/workflows/ci.yml). There's no build step, so these suites plus a quick manual pass across skins/themes are the full check.
+
+The dated answer history is kept fresh by a scheduled workflow ([`refresh-data.yml`](.github/workflows/refresh-data.yml)) that re-runs the generator weekly and commits any changes.
 
 ---
 
@@ -199,6 +230,6 @@ Contributions are welcome — bug reports, fixes, new skins, and features all.
 
 ## License
 
-No license has been chosen yet. Until one is added, the code is provided as-is for personal and educational use; please open an issue if you'd like to use it more broadly.
+Released under the [MIT License](LICENSE) — free to use, modify, and distribute.
 
-Word lists are derived from the public Wordle answer/allowed lists; word-frequency data derives from the Google Books Ngram corpus via Peter Norvig's `count_1w` dataset.
+Word lists are derived from the public Wordle answer/allowed lists; word-frequency data derives from the Google Books Ngram corpus via Peter Norvig's `count_1w` dataset. WoSolve is an independent project and is not affiliated with or endorsed by The New York Times.
